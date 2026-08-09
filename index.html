@@ -365,6 +365,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    height: 96px;
     font-size: 26px;
     font-weight: bold;
     color: #5d4030;
@@ -374,6 +376,12 @@
       0 1px 0 rgba(255,255,255,.65),
       0 3px 8px rgba(93,64,48,.18);
     animation: launchFade 1.2s ease-out;
+  }
+  .title-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.55;
   }
   .title-pixel {
     display: block;
@@ -568,7 +576,7 @@
     </div>
   </div>
   <div class="footer-easter">
-    <div class="footer-brand">田田</div>
+    <div class="footer-brand" id="footerBrand">田田</div>
   </div>
 </div>
 <script>
@@ -864,14 +872,13 @@ function render(now, dt) {
   ctx.scale(SCALE, SCALE);   // 高清渲染：逻辑坐标 250×200 → 画布 500×400
   // ===== 觉醒过渡参数 =====
   // 过渡共 2.5s：0-1.0s 金色脉冲闪光（3 次递增），1.0-2.5s 渐变溶解
-  let aw = 0, awF = 0, awG = 0;
+  let aw = 0, awF = 0;
   if (game.awakened) {
     const el = now - game.awakenAt;
     if (el < 100) {
       awF = Math.max(0, 1 - el / 100);
       aw = 0;
     } else { aw = 1; awF = 0; }   // 瞬时切换：100ms 内完成
-    awG = aw;
   }
   const awakenFx = game.awakened && awF > 0;
   // 背景：LCD 绿 → 卡通天空蓝（觉醒后）
@@ -1560,6 +1567,7 @@ function selectLaunch(next) {
   launchSel = next;
   document.getElementById('choiceA').classList.toggle('selected', launchSel === 'a');
   document.getElementById('choiceB').classList.toggle('selected', launchSel === 'b');
+  document.getElementById('footerBrand').textContent = launchSel === 'a' ? '跳跳' : '田田';
 }
 
 function selectStyle(s) {
