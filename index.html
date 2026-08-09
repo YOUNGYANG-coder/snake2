@@ -294,6 +294,8 @@ class Game {
     this.food = null;
     this.poison = null;
     this.headFlash = 0;
+    this.combo = 0;
+    this.comboTicks = 0;
     this.effects = [];
     this.prevSnake = this.snake.map(s => ({ ...s }));
     this.lastTickAt = performance.now();
@@ -303,6 +305,16 @@ class Game {
   }
 
   spawnFood() {
+    const isGolden = Math.random() < 0.2;
+    const head = this.snake[0];
+    // COMBO≥3 追击：优先在蛇头当前方向直线首格生成
+    if (this.combo >= 3 && head) {
+      const tx = head.x + this.dir.x, ty = head.y + this.dir.y;
+      const free = tx >= 0 && tx < COLS && ty >= 0 && ty < ROWS
+        && !this.snake.some(s => s.x === tx && s.y === ty)
+        && !(this.poison && this.poison.x === tx && this.poison.y === ty);
+      if (free) { this.food = { x: tx, y: ty, golden: isGolden }; return; }
+    }
     const empty = [];
     for (let x = 0; x < COLS; x++) {
       for (let y = 0; y < ROWS; y++) {
@@ -312,7 +324,6 @@ class Game {
       }
     }
     if (empty.length === 0) return; // 蛇填满全屏时保留现有 food
-    const isGolden = Math.random() < 0.2;
     this.food = { x: empty[Math.floor(Math.random() * empty.length)].x, y: empty[Math.floor(Math.random() * empty.length)].y, golden: isGolden };
   }
 
@@ -364,10 +375,15 @@ class Game {
     const atFood = this.food && head.x === this.food.x && head.y === this.food.y;
     const atPoison = this.poison && head.x === this.poison.x && head.y === this.poison.y;
     if (atFood) {
+      // COMBO：窗口内连续吃食连击递增，得分 = 基础分 × (1 + 0.1×combo)，上限 9
+      this.combo = this.comboTicks > 0 ? Math.min(this.combo + 1, 9) : 1;
+      this.comboTicks = 15;
       const pts = this.food.golden ? 20 : 10;
-      this.score += pts;
+      const gained = Math.round(pts * (1 + 0.1 * this.combo));
+      this.score += gained;
       this.headFlash = 6;
-      this.effects.push({ type: 'score', x: head.x * CELL, y: head.y * CELL, text: '+' + pts, t: 0 });
+      this.effects.push({ type: 'score', x: head.x * CELL, y: head.y * CELL, text: '+' + gained, t: 0 });
+      if (this.combo >= 5) this.emitEvent('combo');
       if (this.score % 50 === 0) {
         this.emitEvent('levelup');
         this.effects.push({ type: 'levelup', t: 0 });
@@ -379,12 +395,18 @@ class Game {
     }
     if (atPoison) {
       this.score = Math.max(0, this.score - 10);
+      this.combo = 0; this.comboTicks = 0;
       this.effects.push({ type: 'score', x: head.x * CELL, y: head.y * CELL, text: '-10', t: 0 });
       this.emitEvent('poison');
       this.spawnPoison();
     }
     if (this.poison && --this.poison.ttl <= 0) this.spawnPoison();
     if (this.headFlash > 0) this.headFlash--;
+    // COMBO 窗口超时：连击断开
+    if (this.comboTicks > 0 && --this.comboTicks === 0) {
+      this.combo = 0;
+      this.effects.push({ type: 'miss', x: this.snake[0].x * CELL, y: this.snake[0].y * CELL - 6, text: 'MISS', t: 0 });
+    }
   }
 
   start() {
@@ -431,6 +453,7 @@ const sounds = {
       else if (name === 'golden') { o.frequency.value = 1318.5; o.type = 'square'; g.gain.setValueAtTime(0.12, t); }
       else if (name === 'crash') { o.frequency.value = 110; o.type = 'sawtooth'; g.gain.setValueAtTime(0.15, t); }
       else if (name === 'poison') { o.frequency.value = 196; o.type = 'triangle'; g.gain.setValueAtTime(0.12, t); }
+      else if (name === 'combo') { o.frequency.value = 1200; o.type = 'square'; g.gain.setValueAtTime(0.12, t); }
       else { o.frequency.value = 440; o.type = 'square'; g.gain.setValueAtTime(0.08, t); }
       g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
       o.start(t);
@@ -440,8 +463,9 @@ const sounds = {
 };
 
 game.onEvent = ev => {
-  if (ev === 'eat' && game.food && game.food.golden) sounds.play('golden');
-  else sounds.play(ev);
+  if (ev === 'combo') sounds.play('combo');                       // 高连击专属高音，替代 eat
+  else if (ev === 'eat' && game.food && game.food.golden) sounds.play('golden');
+  else if (ev !== 'eat') sounds.play(ev);                         // combo≥5 时 eat 音被 combo 音替代
   if (ev === 'crash') updateBest();
 };
 
@@ -479,11 +503,15 @@ function render(now, dt) {
   } else if (game.state === 'idle') {
     prog = Math.min(1, (now - game.lastTickAt) / 200);
   }
+  // COMBO≥5 蛇身提亮一档
+  const hot = game.combo >= 5;
   game.snake.forEach((s, i) => {
     const prev = game.prevSnake[i] || s;
     const x = (prev.x + (s.x - prev.x) * prog) * CELL;
     const y = (prev.y + (s.y - prev.y) * prog) * CELL;
-    ctx.fillStyle = i % 2 === 0 ? '#3a3a2e' : '#52523a';
+    ctx.fillStyle = hot
+      ? (i % 2 === 0 ? '#4d4c3c' : '#6b6b4a')
+      : (i % 2 === 0 ? '#3a3a2e' : '#52523a');
     ctx.fillRect(x + 1, y + 1, CELL - 2, CELL - 2);
   });
   // 蛇头闪亮（刚吃到食物时）
@@ -491,8 +519,9 @@ function render(now, dt) {
     ctx.fillStyle = '#f4f4c0';
     ctx.fillRect(game.snake[0].x * CELL + 2, game.snake[0].y * CELL + 2, CELL - 4, CELL - 4);
   }
-  // 食物：金色钻石 / 普通方块（闪烁）
-  const blink = Math.floor(performance.now() / 300) % 2 === 0;
+  // 食物：金色钻石 / 普通方块（闪烁；COMBO≥3 闪烁频率加倍）
+  const blinkBase = game.combo >= 3 ? 150 : 300;
+  const blink = Math.floor(performance.now() / blinkBase) % 2 === 0;
   if (game.food) {
     if (game.food.golden) {
       const cx = game.food.x * CELL + CELL / 2, cy = game.food.y * CELL + CELL / 2;
@@ -543,6 +572,11 @@ function render(now, dt) {
       ctx.textAlign = 'center';
       ctx.fillText('LEVEL UP', 125, 100);
       ctx.textAlign = 'left';
+    } else if (ef.type === 'miss') {
+      const alpha = Math.max(0, 1 - ef.t / 500);
+      ctx.fillStyle = `rgba(120,120,110,${alpha.toFixed(2)})`;
+      ctx.font = 'bold 10px monospace';
+      ctx.fillText(ef.text, ef.x, ef.y - ef.t * 0.05);
     }
   });
   game.effects = game.effects.filter(ef => ef.t < 1000);
@@ -572,7 +606,8 @@ function render(now, dt) {
   else if (game.state === 'paused') text = '已暂停';
   else if (game.state === 'over') text = 'GAME OVER\n得分 ' + game.score + '\n按任意键返回';
   stateText.textContent = text;
-  document.getElementById('scoreText').textContent = 'SCORE ' + game.score;
+  document.getElementById('scoreText').textContent =
+    game.combo >= 2 ? 'SCORE ' + game.score + '  COMBO x' + game.combo : 'SCORE ' + game.score;
   const aLabel = game.state === 'paused' ? '继续' : game.state === 'playing' ? '暂停' : '开始';
   const bLabel = game.state === 'playing' ? '难度 ' + DIFFICULTY[game.difficulty].label : '难度';
   btnA.lastChild.textContent = aLabel;
