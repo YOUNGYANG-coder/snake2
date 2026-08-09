@@ -1277,6 +1277,9 @@ const tetris = {
 
   start() {
     this.reset();
+    // 开局按当前全局画风设置（像素模式觉醒状态清零，卡通模式保持卡通）
+    this.awakened = typeof launchStyle !== 'undefined' && launchStyle === 'cartoon';
+    this.awakenAt = this.awakened ? performance.now() - 99999 : 0;
     this.state = 'playing';
     this.spawn();
   },
@@ -1712,6 +1715,7 @@ document.querySelectorAll('.dpad-btn').forEach(btn => {
 });
 
 btnA.addEventListener('click', () => {
+  if (view === 'launch') { confirmLaunch(); return; }
   if (view === 'tetris') {
     if (tetris.state === 'idle' || tetris.state === 'over') { tetris.start(); sounds.play('click'); }
     return;
