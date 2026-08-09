@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#2e2e2e">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-512.png">
+<title>Snake II — 诺基亚复刻版贪吃蛇</title>
+<style>
+  /* LCD 复古外观 */
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+      radial-gradient(1200px 800px at 50% 20%, #5a5a5a, #333 60%, #262626);
+    font-family: monospace;
+  }
+  .phone {
+    position: relative;
+    background:
+      radial-gradient(120% 90% at 30% 15%, rgba(255,255,255,.10), transparent 45%),
+      linear-gradient(160deg, #4e4e4e, #2c2c2c 55%, #232323);
+    border-radius: 20px;
+    padding: 24px 24px 20px;
+    box-shadow:
+      0 18px 45px rgba(0,0,0,.65),
+      0 2px 6px rgba(0,0,0,.4),
+      inset 0 2px 3px rgba(255,255,255,.14),
+      inset 0 -2px 4px rgba(0,0,0,.35);
+  }
+  .phone::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      175deg,
+      transparent 0 2px,
+      rgba(255,255,255,.02) 2px 3px,
+      transparent 3px 5px
+    );
+  }
+  .phone::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 64px;
+    height: 5px;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #1c1c1c, #3a3a3a);
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.08);
+  }
+  .screen-wrap {
+    position: relative;
+    margin: 12px auto 0;
+    padding: 6px;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #6a6a6a, #4a4a4a);
+    box-shadow:
+      inset 0 2px 5px rgba(0,0,0,.55),
+      inset 0 -1px 2px rgba(255,255,255,.18),
+      0 1px 2px rgba(255,255,255,.08);
+  }
+  .brand {
+    text-align: center;
+    color: #b8b8b8;
+    letter-spacing: 4px;
+    font-size: 15px;
+    font-weight: bold;
+    margin-bottom: 14px;
+  }
+  .screen-wrap {
+    position: relative;
+    margin: 0 auto;
+  }
+  #screen {
+    display: block;
+    width: min(92vw, calc((96vh - 345px) * 1.25));
+    aspect-ratio: 5 / 4;
+    background: #9e9d24;
+    border-radius: 3px;
+    box-shadow:
+      inset 0 0 0 1px rgba(0,0,0,.25),
+      inset 0 0 6px rgba(0,0,0,.28);
+    image-rendering: pixelated;
+  }
+  .screen-wrap::after {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border-radius: 3px;
+    pointer-events: none;
+    background: linear-gradient(115deg, rgba(255,255,255,.10) 0%, rgba(255,255,255,.10) 26%, transparent 40%);
+  }
+  #stateText {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #3a3a2e;
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-align: center;
+    pointer-events: none;
+    line-height: 1.8;
+    white-space: pre-line;
+  }
+  .hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #cfcd97;
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    margin: 10px 2px 0;
+    padding: 7px 10px;
+    border-radius: 6px;
+    background: linear-gradient(180deg, #2a2a2a, #202020);
+    box-shadow:
+      inset 0 2px 4px rgba(0,0,0,.6),
+      inset 0 -1px 1px rgba(255,255,255,.07),
+      0 1px 0 rgba(255,255,255,.06);
+  }
+  .gamepad {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 14px;
+    padding: 16px 18px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #2b2b2b, #252525);
+    box-shadow:
+      inset 0 3px 8px rgba(0,0,0,.55),
+      inset 0 -1px 1px rgba(255,255,255,.06);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .dpad {
+    display: grid;
+    grid-template-columns: repeat(3, 54px);
+    grid-template-rows: repeat(3, 54px);
+    justify-items: center;
+    align-items: center;
+  }
+  .dpad-btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: none;
+    background:
+      radial-gradient(circle at 35% 28%, #838383 0%, #5c5c5c 35%, #3a3a3a 78%, #2c2c2c 100%);
+    color: #e2e2e2;
+    font-size: 20px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+      0 4px 0 #1d1d1d,
+      0 6px 10px rgba(0,0,0,.45),
+      inset 0 2px 2px rgba(255,255,255,.25),
+      inset 0 -3px 4px rgba(0,0,0,.3);
+    cursor: pointer;
+    user-select: none;
+    touch-action: none;
+  }
+  .dpad-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #1d1d1d, 0 2px 4px rgba(0,0,0,.35), inset 0 2px 2px rgba(255,255,255,.18); }
+  .pad-up    { grid-area: 1 / 2; }
+  .pad-left  { grid-area: 2 / 1; }
+  .pad-right { grid-area: 2 / 3; }
+  .pad-down  { grid-area: 3 / 2; }
+  .ab-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+  }
+  .ab-btn {
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    border: none;
+    color: #eee;
+    font-family: monospace;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    box-shadow:
+      0 4px 0 #1c1c1c,
+      0 6px 10px rgba(0,0,0,.4),
+      inset 0 2px 2px rgba(255,255,255,.22),
+      inset 0 -3px 5px rgba(0,0,0,.28);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .ab-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #1c1c1c, 0 2px 4px rgba(0,0,0,.3), inset 0 2px 2px rgba(255,255,255,.15); }
+  .footer-brand {
+    text-align: center;
+    margin-top: 14px;
+    color: #8d8d8d;
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 5px;
+    text-shadow: 0 1px 1px rgba(0,0,0,.7);
+  }
+  .footer-easter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 8px;
+  }
+  .footer-easter .footer-brand {
+    margin-top: 0;
+    letter-spacing: 8px;
+    font-size: 15px;
+  }
+  .btn-a { background: radial-gradient(circle at 35% 30%, #c05a4a, #7a2f26 75%); }
+  .btn-b { background: radial-gradient(circle at 35% 30%, #7d74a8, #433c6b 75%); }
+  .ab-letter { font-size: 22px; }
+  .ab-sub { font-size: 10px; font-weight: normal; margin-top: 4px; letter-spacing: 0; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="brand">NOKIA</div>
+  <div class="screen-wrap">
+    <canvas id="screen" width="250" height="200"></canvas>
+    <div id="stateText"></div>
+  </div>
+  <div class="hud">
+    <span id="scoreText">SCORE 0</span>
+    <span id="bestText">BEST 0</span>
+  </div>
+  <div class="gamepad">
+    <div class="dpad">
+      <button class="dpad-btn pad-up" data-dir="0,-1" aria-label="上">▲</button>
+      <button class="dpad-btn pad-left" data-dir="-1,0" aria-label="左">◀</button>
+      <button class="dpad-btn pad-right" data-dir="1,0" aria-label="右">▶</button>
+      <button class="dpad-btn pad-down" data-dir="0,1" aria-label="下">▼</button>
+    </div>
+    <div class="ab-btns">
+      <button id="abA" class="ab-btn btn-a"><span class="ab-letter">A</span><span class="ab-sub">开始</span></button>
+      <button id="abB" class="ab-btn btn-b"><span class="ab-letter">B</span><span class="ab-sub">暂停</span></button>
+    </div>
+  </div>
+  <div class="footer-easter">
+    <div class="footer-brand">田田</div>
+  </div>
+</div>
+<script>
+const COLS = 25, ROWS = 20;
+const CELL = 10;
+const DIFFICULTY = {
+  slow:   { label: '慢', ms: 180 },
+  normal: { label: '中', ms: 120 },
+  fast:   { label: '快', ms: 80 },
+};
+const ORDER = ['slow', 'normal', 'fast'];
+
+class Game {
+  constructor(screen) {
+    this.screen = screen;
+    this.ctx = screen.getContext('2d');
+    this.state = 'idle';
+    this.difficulty = 'normal';
+    this.onEvent = null;
+    this.effects = [];
+    this.reset();
+  }
+
+  reset() {
+    this.snake = [];
+    for (let i = 0; i < 7; i++) this.snake.push({ x: 12 - i, y: 10 });
+    this.dir = { x: 1, y: 0 };
+    this.queue = null;
+    this.score = 0;
+    this.alive = true;
+    this.paused = false;
+    this.state = 'idle';
+    this.food = null;
+    this.poison = null;
+    this.headFlash = 0;
+    this.effects = [];
+    this.prevSnake = this.snake.map(s => ({ ...s }));
+    this.lastTickAt = performance.now();
+    this.demoStep = 0;
+    this.spawnFood();
+    this.spawnPoison();
+  }
+
+  spawnFood() {
+    const empty = [];
+    for (let x = 0; x < COLS; x++) {
+      for (let y = 0; y < ROWS; y++) {
+        if (!this.snake.some(s => s.x === x && s.y === y) && !(this.poison && this.poison.x === x && this.poison.y === y)) {
+          empty.push({ x, y });
+        }
+      }
+    }
+    if (empty.length === 0) return; // 蛇填满全屏时保留现有 food
+    const isGolden = Math.random() < 0.2;
+    this.food = { x: empty[Math.floor(Math.random() * empty.length)].x, y: empty[Math.floor(Math.random() * empty.length)].y, golden: isGolden };
+  }
+
+  spawnPoison() {
+    const empty = [];
+    for (let x = 0; x < COLS; x++) {
+      for (let y = 0; y < ROWS; y++) {
+        if (!this.snake.some(s => s.x === x && s.y === y) && !(this.food && this.food.x === x && this.food.y === y)) {
+          empty.push({ x, y });
+        }
+      }
+    }
+    if (empty.length === 0) { this.poison = null; return; }
+    const p = empty[Math.floor(Math.random() * empty.length)];
+    this.poison = { x: p.x, y: p.y, ttl: 25 };
+  }
+
+  emitEvent(name) {
+    if (this.onEvent) this.onEvent(name);
+  }
+
+  get speedMs() {
+    const bonus = Math.floor(this.score / 50) * 5;
+    return Math.max(60, DIFFICULTY[this.difficulty].ms - bonus);
+  }
+
+  turn(dx, dy) {
+    if (this.dir.x === -dx && this.dir.y === -dy) return; // 不可反向
+    this.queue = { x: dx, y: dy };
+  }
+
+  tick() {
+    if (this.state !== 'playing' || this.paused || !this.alive) return;
+    if (this.queue) { this.dir = this.queue; this.queue = null; }
+    this.prevSnake = this.snake.map(s => ({ ...s }));
+    this.lastTickAt = performance.now();
+    const head = { x: this.snake[0].x + this.dir.x, y: this.snake[0].y + this.dir.y };
+    if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) {
+      this.alive = false; this.state = 'over';
+      this.effects.push({ type: 'crash', t: 0 });
+      this.emitEvent('crash'); return;
+    }
+    if (this.snake.some(s => s.x === head.x && s.y === head.y)) {
+      this.alive = false; this.state = 'over';
+      this.effects.push({ type: 'crash', t: 0 });
+      this.emitEvent('crash'); return;
+    }
+    this.snake.unshift(head);
+    const atFood = this.food && head.x === this.food.x && head.y === this.food.y;
+    const atPoison = this.poison && head.x === this.poison.x && head.y === this.poison.y;
+    if (atFood) {
+      const pts = this.food.golden ? 20 : 10;
+      this.score += pts;
+      this.headFlash = 6;
+      this.effects.push({ type: 'score', x: head.x * CELL, y: head.y * CELL, text: '+' + pts, t: 0 });
+      if (this.score % 50 === 0) {
+        this.emitEvent('levelup');
+        this.effects.push({ type: 'levelup', t: 0 });
+      }
+      this.emitEvent('eat');
+      this.spawnFood();
+    } else {
+      this.snake.pop();
+    }
+    if (atPoison) {
+      this.score = Math.max(0, this.score - 10);
+      this.effects.push({ type: 'score', x: head.x * CELL, y: head.y * CELL, text: '-10', t: 0 });
+      this.emitEvent('poison');
+      this.spawnPoison();
+    }
+    if (this.poison && --this.poison.ttl <= 0) this.spawnPoison();
+    if (this.headFlash > 0) this.headFlash--;
+  }
+
+  start() {
+    this.reset();
+    this.state = 'playing';
+  }
+
+  togglePause() {
+    if (this.state === 'playing') { this.paused = true; this.state = 'paused'; }
+    else if (this.state === 'paused') { this.paused = false; this.state = 'playing'; }
+  }
+
+  cycleDifficulty() {
+    const i = ORDER.indexOf(this.difficulty);
+    this.difficulty = ORDER[(i + 1) % ORDER.length];
+    return this.difficulty;
+  }
+}
+
+const game = new Game(document.getElementById('screen'));
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+const sounds = {
+  play(name) {
+    try {
+      if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+      const t = audioCtx.currentTime;
+      if (name === 'levelup') {
+        [523.25, 659.25, 783.99].forEach((f, i) => {
+          const o = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          o.connect(g); g.connect(audioCtx.destination);
+          o.frequency.value = f; o.type = 'square';
+          g.gain.setValueAtTime(0.1, t + i * 0.09);
+          g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.09 + 0.12);
+          o.start(t + i * 0.09);
+          o.stop(t + i * 0.09 + 0.14);
+        });
+        return;
+      }
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.connect(g); g.connect(audioCtx.destination);
+      if (name === 'eat') { o.frequency.value = 880; o.type = 'square'; g.gain.setValueAtTime(0.12, t); }
+      else if (name === 'golden') { o.frequency.value = 1318.5; o.type = 'square'; g.gain.setValueAtTime(0.12, t); }
+      else if (name === 'crash') { o.frequency.value = 110; o.type = 'sawtooth'; g.gain.setValueAtTime(0.15, t); }
+      else if (name === 'poison') { o.frequency.value = 196; o.type = 'triangle'; g.gain.setValueAtTime(0.12, t); }
+      else { o.frequency.value = 440; o.type = 'square'; g.gain.setValueAtTime(0.08, t); }
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+      o.start(t);
+      o.stop(t + 0.2);
+    } catch (err) { /* 音频不可用时静默失败 */ }
+  }
+};
+
+game.onEvent = ev => {
+  if (ev === 'eat' && game.food && game.food.golden) sounds.play('golden');
+  else sounds.play(ev);
+  if (ev === 'crash') updateBest();
+};
+
+const bestKey = 'snakeBest';
+let best = parseInt(localStorage.getItem(bestKey) || '0', 10) || 0;
+document.getElementById('bestText').textContent = 'BEST ' + best;
+
+function updateBest() {
+  if (game.score > best) {
+    best = game.score;
+    localStorage.setItem(bestKey, String(best));
+    document.getElementById('bestText').textContent = 'BEST ' + best;
+  }
+}
+
+const stateText = document.getElementById('stateText');
+const btnA = document.getElementById('abA');
+const btnB = document.getElementById('abB');
+
+function render(now, dt) {
+  const ctx = game.ctx;
+  // LCD 底色 + 网格线
+  ctx.fillStyle = '#9e9d24';
+  ctx.fillRect(0, 0, 250, 200);
+  ctx.strokeStyle = 'rgba(122,121,32,0.35)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let x = 0; x <= 250; x += CELL) { ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, 200); }
+  for (let y = 0; y <= 200; y += CELL) { ctx.moveTo(0, y + 0.5); ctx.lineTo(250, y + 0.5); }
+  ctx.stroke();
+  // 蛇：在格子间平滑滑动（prevSnake → snake 线性插值）
+  let prog = 0;
+  if (game.state === 'playing') {
+    prog = Math.min(1, (now - game.lastTickAt) / game.speedMs);
+  } else if (game.state === 'idle') {
+    prog = Math.min(1, (now - game.lastTickAt) / 200);
+  }
+  game.snake.forEach((s, i) => {
+    const prev = game.prevSnake[i] || s;
+    const x = (prev.x + (s.x - prev.x) * prog) * CELL;
+    const y = (prev.y + (s.y - prev.y) * prog) * CELL;
+    ctx.fillStyle = i % 2 === 0 ? '#3a3a2e' : '#52523a';
+    ctx.fillRect(x + 1, y + 1, CELL - 2, CELL - 2);
+  });
+  // 蛇头闪亮（刚吃到食物时）
+  if (game.headFlash > 0 && game.snake.length > 0) {
+    ctx.fillStyle = '#f4f4c0';
+    ctx.fillRect(game.snake[0].x * CELL + 2, game.snake[0].y * CELL + 2, CELL - 4, CELL - 4);
+  }
+  // 食物：金色钻石 / 普通方块（闪烁）
+  const blink = Math.floor(performance.now() / 300) % 2 === 0;
+  if (game.food) {
+    if (game.food.golden) {
+      const cx = game.food.x * CELL + CELL / 2, cy = game.food.y * CELL + CELL / 2;
+      ctx.fillStyle = '#5c4a00';
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - 4); ctx.lineTo(cx + 4, cy); ctx.lineTo(cx, cy + 4); ctx.lineTo(cx - 4, cy);
+      ctx.closePath();
+      ctx.fill();
+      if (blink) {
+        ctx.fillStyle = '#f4e04a';
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - 3); ctx.lineTo(cx + 3, cy); ctx.lineTo(cx, cy + 3); ctx.lineTo(cx - 3, cy);
+        ctx.closePath();
+        ctx.fill();
+      }
+    } else if (blink) {
+      ctx.fillStyle = '#3a3a2e';
+      ctx.fillRect(game.food.x * CELL + 2, game.food.y * CELL + 2, CELL - 4, CELL - 4);
+    }
+  }
+  // 毒食物（骷髅，25 tick 后消失，临消失前急促闪烁）
+  if (game.poison) {
+    const nearEnd = game.poison.ttl <= 8;
+    const visible = nearEnd ? Math.floor(performance.now() / 120) % 2 === 0 : blink;
+    if (visible) {
+      const px2 = game.poison.x * CELL, py2 = game.poison.y * CELL;
+      ctx.strokeStyle = '#3a3a2e';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(px2 + 3, py2 + 3, CELL - 6, CELL - 6);
+      ctx.fillStyle = '#3a3a2e';
+      ctx.fillRect(px2 + 4, py2 + 4, 1, 1);
+      ctx.fillRect(px2 + 7, py2 + 4, 1, 1);
+      ctx.fillRect(px2 + 4, py2 + 7, 4, 1);
+    }
+  }
+  // 特效：得分飘字 / 升级横幅（按 dt 推进，帧率无关）
+  game.effects.forEach(ef => {
+    ef.t += dt;
+    if (ef.type === 'score') {
+      const alpha = Math.max(0, 1 - ef.t / 550);
+      ctx.fillStyle = `rgba(90,74,0,${alpha.toFixed(2)})`;
+      ctx.font = 'bold 10px monospace';
+      ctx.fillText(ef.text, ef.x, ef.y - ef.t * 0.04);
+    } else if (ef.type === 'levelup') {
+      const alpha = Math.max(0, 1 - ef.t / 900);
+      ctx.fillStyle = `rgba(58,58,46,${alpha.toFixed(2)})`;
+      ctx.font = 'bold 14px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('LEVEL UP', 125, 100);
+      ctx.textAlign = 'left';
+    }
+  });
+  game.effects = game.effects.filter(ef => ef.t < 1000);
+  // 屏幕红闪（撞墙/撞自己）
+  if (game.state === 'over' && Math.floor(performance.now() / 150) % 2 === 0) {
+    ctx.fillStyle = 'rgba(140,30,20,0.28)';
+    ctx.fillRect(0, 0, 250, 200);
+  }
+  // 待机画面：蛇绕圈演示（按帧率节拍，每 200ms 一步）
+  if (game.state === 'idle') {
+    if (now - game.lastTickAt > 200) {
+      const c = game.snake[0];
+      const side = game.demoStep % 4;
+      const moves = [[1, 0], [0, 1], [-1, 0], [0, -1]];
+      const nx = c.x + moves[side][0], ny = c.y + moves[side][1];
+      if (nx >= 0 && nx < COLS && ny >= 0 && ny < ROWS) {
+        game.prevSnake = game.snake.map(s => ({ ...s }));
+        game.lastTickAt = now;
+        game.snake.unshift({ x: nx, y: ny });
+        game.snake.pop();
+        game.demoStep++;
+      }
+    }
+  }
+  let text = '';
+  if (game.state === 'idle') text = 'SNAKE II\n按任意键开始';
+  else if (game.state === 'paused') text = '已暂停';
+  else if (game.state === 'over') text = 'GAME OVER\n得分 ' + game.score + '\n按任意键返回';
+  stateText.textContent = text;
+  document.getElementById('scoreText').textContent = 'SCORE ' + game.score;
+  const aLabel = game.state === 'paused' ? '继续' : game.state === 'playing' ? '暂停' : '开始';
+  const bLabel = game.state === 'playing' ? '难度 ' + DIFFICULTY[game.difficulty].label : '难度';
+  btnA.lastChild.textContent = aLabel;
+  btnB.lastChild.textContent = bLabel;
+}
+
+// 游戏逻辑：setTimeout 按 speedMs 走格（保持复古节奏）
+function loop() {
+  game.tick();
+  setTimeout(loop, game.speedMs);
+}
+
+// 渲染：requestAnimationFrame 60 FPS 驱动（动画平滑）
+let lastFrame = performance.now();
+function frame(now) {
+  const dt = Math.min(now - lastFrame, 50);
+  lastFrame = now;
+  render(now, dt);
+  requestAnimationFrame(frame);
+}
+
+const enterGameplay = new Set([' ', 'p', 'P', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', 'W', 'A', 'S', 'D']);
+
+function onKey(e) {
+  const k = e.key;
+  if (k === 'ArrowUp' || k === 'w' || k === 'W') { game.turn(0, -1); e.preventDefault(); }
+  else if (k === 'ArrowDown' || k === 's' || k === 'S') { game.turn(0, 1); e.preventDefault(); }
+  else if (k === 'ArrowLeft' || k === 'a' || k === 'A') { game.turn(-1, 0); e.preventDefault(); }
+  else if (k === 'ArrowRight' || k === 'd' || k === 'D') { game.turn(1, 0); e.preventDefault(); }
+  else if (k === ' ' || k === 'p' || k === 'P') { game.togglePause(); e.preventDefault(); }
+}
+
+document.addEventListener('keydown', onKey);
+loop();
+requestAnimationFrame(frame);
+
+// PWA：注册 Service Worker（离线缓存，仅 https 或 localhost 生效）
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+function handleStartKey() {
+  if (game.state === 'idle') { game.start(); sounds.play('click'); }
+  else if (game.state === 'over') { game.reset(); sounds.play('click'); }
+}
+
+document.addEventListener('keydown', e => {
+  if (enterGameplay.has(e.key)) handleStartKey();
+});
+
+document.querySelectorAll('.dpad-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const [dx, dy] = btn.dataset.dir.split(',').map(Number);
+    game.turn(dx, dy);
+    if (game.state === 'idle' || game.state === 'over') handleStartKey();
+  });
+});
+
+btnA.addEventListener('click', () => {
+  if (game.state === 'idle' || game.state === 'over') { handleStartKey(); }  // 内部已播放点击声
+  else { game.togglePause(); sounds.play('click'); }
+});
+
+btnB.addEventListener('click', () => {
+  game.cycleDifficulty();
+  sounds.play('click');
+});
+</script>
+</body>
+</html>
