@@ -163,20 +163,22 @@
   }
   .dpad {
     display: grid;
-    grid-template-columns: repeat(3, 54px);
-    grid-template-rows: repeat(3, 54px);
+    grid-template-columns: repeat(3, 50px);
+    grid-template-rows: repeat(3, 38px);
     justify-items: center;
     align-items: center;
+    width: 150px;
+    height: 114px;
   }
   .dpad-btn {
-    width: 52px;
-    height: 52px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     border: none;
     background:
       radial-gradient(circle at 35% 28%, #838383 0%, #5c5c5c 35%, #3a3a3a 78%, #2c2c2c 100%);
     color: #e2e2e2;
-    font-size: 20px;
+    font-size: 15px;
     line-height: 1;
     display: flex;
     align-items: center;
@@ -196,15 +198,72 @@
   .pad-left  { grid-area: 2 / 1; }
   .pad-right { grid-area: 2 / 3; }
   .pad-down  { grid-area: 3 / 2; }
+  /* 飞机大战滑杆（替代 D-pad，尺寸与 D-pad 一致保持机身不变） */
+  .shoot-slider {
+    position: relative;
+    width: 150px;
+    height: 114px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #2b2b2b, #1f1f1f);
+    box-shadow: inset 0 3px 8px rgba(0,0,0,.6), inset 0 -1px 1px rgba(255,255,255,.06);
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: pointer;
+  }
+  .slider-track {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    top: 50%;
+    height: 4px;
+    margin-top: -2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #4a4a4a, #6a6a6a);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,.5);
+  }
+  .slider-track::before, .slider-track::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    font-size: 0;
+  }
+  .slider-track::before {
+    left: -6px;
+    width: 0; height: 0;
+    border: 5px solid transparent;
+    border-right-color: #7a7a7a;
+  }
+  .slider-track::after {
+    right: -6px;
+    width: 0; height: 0;
+    border: 5px solid transparent;
+    border-left-color: #7a7a7a;
+  }
+  .slider-knob {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40px;
+    height: 40px;
+    margin: -20px 0 0 -20px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 28%, #8a94a8 0%, #4a5264 60%, #333 100%);
+    box-shadow:
+      0 3px 6px rgba(0,0,0,.5),
+      inset 0 2px 3px rgba(255,255,255,.25),
+      inset 0 -3px 5px rgba(0,0,0,.3);
+    transition: left .05s linear;
+  }
   .ab-btns {
     display: flex;
     flex-direction: row;
-    gap: 14px;
+    gap: 12px;
     align-items: center;
   }
   .ab-btn {
-    width: 58px;
-    height: 58px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     border: none;
     color: #eee;
@@ -247,16 +306,171 @@
   }
   .btn-a { background: radial-gradient(circle at 35% 30%, #c05a4a, #7a2f26 75%); }
   .btn-b { background: radial-gradient(circle at 35% 30%, #7d74a8, #433c6b 75%); }
+  .btn-c { background: radial-gradient(circle at 35% 30%, #5a8a5a, #2f5a2f 75%); }
   .ab-letter { font-size: 22px; }
   .ab-sub { font-size: 10px; font-weight: normal; margin-top: 4px; letter-spacing: 0; }
+  /* ===== 启动问答页 ===== */
+  .launch {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    z-index: 5;
+    font-family: monospace;
+    text-align: center;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse at 50% 30%, rgba(255,245,220,.6), transparent 60%);
+  }
+  .launch.hidden { display: none; }
+  .launch-bg {
+    position: absolute;
+    inset: -25%;
+    background:
+      radial-gradient(ellipse at 28% 22%, rgba(255,236,200,.85), transparent 45%),
+      radial-gradient(ellipse at 78% 78%, rgba(255,205,150,.7), transparent 50%),
+      linear-gradient(165deg, #f8ead2, #f3dcb8 55%, #eed2aa);
+    animation: launchDrift 9s ease-in-out infinite alternate;
+  }
+  @keyframes launchDrift {
+    from { transform: translate(-3%, -2%) rotate(-1.5deg); }
+    to { transform: translate(3%, 2%) rotate(1.5deg); }
+  }
+  .launch-title {
+    position: relative;
+    font-size: 26px;
+    font-weight: bold;
+    color: #5d4030;
+    letter-spacing: 5px;
+    line-height: 1.55;
+    text-shadow:
+      0 1px 0 rgba(255,255,255,.65),
+      0 3px 8px rgba(93,64,48,.18);
+    animation: launchFade 1.2s ease-out;
+  }
+  .launch-divider {
+    position: relative;
+    width: 90px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(141,98,64,.5), transparent);
+    animation: launchFade 1.2s ease-out .2s backwards;
+  }
+  .launch-question {
+    position: relative;
+    font-size: 15px;
+    font-weight: bold;
+    color: #8a6240;
+    letter-spacing: 4px;
+    animation: launchFade 1.2s ease-out .35s backwards;
+  }
+  .launch-choices {
+    position: relative;
+    display: flex;
+    gap: 34px;
+    animation: launchFade 1.2s ease-out .55s backwards;
+  }
+  .choice-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .choice-avatar {
+    display: none;
+  }
+  /* 侧边滑入角色（大 emoji + 渐隐过渡） */
+  .launch-kid {
+    position: absolute;
+    left: -70px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 96px;
+    line-height: 1;
+    opacity: 0;
+    transition: left .7s cubic-bezier(.2,.7,.3,1), opacity .7s ease;
+    pointer-events: none;
+    z-index: 6;
+    filter: drop-shadow(0 6px 14px rgba(93,64,48,.3));
+  }
+  .launch-kid.show {
+    left: 10px;
+    opacity: 1;
+  }
+  @keyframes avatarFloat {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-6px) scale(1.06); }
+  }
+  .choice-btn {
+    width: 108px;
+    padding: 14px 0;
+    border-radius: 14px;
+    border: 2px solid rgba(107,74,47,.28);
+    background: linear-gradient(180deg, #fffaf0, #f5e6cc);
+    color: #6b4a2f;
+    font-family: monospace;
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    cursor: pointer;
+    box-shadow:
+      0 4px 10px rgba(107,74,47,.22),
+      inset 0 1px 0 rgba(255,255,255,.85);
+    transition: transform .18s, box-shadow .18s, border-color .18s;
+    animation: launchFade 1.2s ease-out .55s backwards;
+  }
+  .choice-btn:hover { transform: translateY(-3px); }
+  .choice-wrap.selected .choice-a {
+    border-color: #c0704a;
+    box-shadow:
+      0 5px 16px rgba(192,112,74,.45),
+      inset 0 1px 0 rgba(255,255,255,.85);
+    transform: translateY(-3px) scale(1.05);
+    color: #a05030;
+  }
+  .choice-wrap.selected .choice-b {
+    border-color: #5a78b4;
+    box-shadow:
+      0 5px 16px rgba(90,120,180,.45),
+      inset 0 1px 0 rgba(255,255,255,.85);
+    transform: translateY(-3px) scale(1.05);
+    color: #40588a;
+  }
+  .launch-hint {
+    position: relative;
+    font-size: 10px;
+    color: #b09070;
+    letter-spacing: 2px;
+    animation: launchFade 1.2s ease-out .75s backwards;
+  }
+  @keyframes launchFade {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .launch.hidden .launch-title { animation: none; }
+
 </style>
 </head>
 <body>
 <div class="phone">
   <div class="brand">NOKIA</div>
   <div class="screen-wrap">
-    <canvas id="screen" width="250" height="200"></canvas>
+    <canvas id="screen" width="500" height="400"></canvas>
     <div id="stateText"></div>
+    <div id="launch" class="launch">
+      <div class="launch-bg"></div>
+      <div class="launch-title">欢迎来到<br>舒适空间</div>
+      <div class="launch-divider"></div>
+      <div class="launch-question">你是谁？</div>
+      <div class="launch-choices">
+        <button id="choiceA" class="choice-btn choice-a">A跳跳</button>
+        <button id="choiceB" class="choice-btn choice-b">B田田</button>
+      </div>
+      <div id="launchKid" class="launch-kid"></div>
+      <div class="launch-hint">↑↓ 选择 · A/B 确认</div>
+    </div>
   </div>
   <div class="hud">
     <span id="scoreText">SCORE 0</span>
@@ -266,13 +480,18 @@
   <div class="gamepad">
     <div class="ab-btns">
       <button id="abA" class="ab-btn btn-a"><span class="ab-letter">A</span><span class="ab-sub">开始</span></button>
-      <button id="abB" class="ab-btn btn-b"><span class="ab-letter">B</span><span class="ab-sub">难度</span></button>
+      <button id="abB" class="ab-btn btn-b"><span class="ab-letter">B</span><span class="ab-sub">返回</span></button>
+      <button id="abC" class="ab-btn btn-c"><span class="ab-letter">C</span><span class="ab-sub">难度</span></button>
     </div>
-    <div class="dpad">
+    <div class="dpad" id="dpad">
       <button class="dpad-btn pad-up" data-dir="0,-1" aria-label="上">▲</button>
       <button class="dpad-btn pad-left" data-dir="-1,0" aria-label="左">◀</button>
       <button class="dpad-btn pad-right" data-dir="1,0" aria-label="右">▶</button>
       <button class="dpad-btn pad-down" data-dir="0,1" aria-label="下">▼</button>
+    </div>
+    <div id="shootSlider" class="shoot-slider" style="display:none">
+      <div class="slider-track"></div>
+      <div class="slider-knob"></div>
     </div>
   </div>
   <div class="footer-easter">
@@ -281,7 +500,8 @@
 </div>
 <script>
 const COLS = 25, ROWS = 20;
-const CELL = 10;
+const CELL = 10;        // 逻辑格子（绘制时 *SCALE）
+const SCALE = 2;        // 高清渲染倍率（画布 500×400）
 const DIFFICULTY = {
   slow:   { label: '慢', ms: 180 },
   normal: { label: '中', ms: 120 },
@@ -475,6 +695,172 @@ class Game {
   }
 }
 
+// ===== 飞机大战（雷霆战机风格）=====
+const shoot = {
+  state: 'idle',       // idle | playing | over
+  x: 12,               // 战机列（网格）
+  y: 17,               // 战机行（固定底部）
+  lives: 3,
+  score: 0,
+  bullets: [],         // {x,y}
+  enemies: [],         // {x,y,type}
+  spawnTicks: 0,
+  fireTicks: 0,
+  awakened: false,
+  awakenAt: 0,
+  effects: [],
+  shake: 0,
+  prevX: 12,
+  keys: { left: false, right: false },
+  power: 0,            // 攻击模式 0=单发 1=双发 2=三连发 3=激光
+  powerTicks: 0,       // 道具持续倒计时
+  powerups: [],        // {x,y,type:1|2|3}
+
+  reset() {
+    this.state = 'idle';
+    this.x = 12; this.y = 17;
+    this.lives = 3;
+    this.score = 0;
+    this.bullets = [];
+    this.enemies = [];
+    this.spawnTicks = 0;
+    this.fireTicks = 0;
+    this.awakened = false;
+    this.awakenAt = 0;
+    this.effects = [];
+    this.shake = 0;
+    this.prevX = 12;
+    this.keys.left = this.keys.right = false;
+    this.power = 0;
+    this.powerTicks = 0;
+    this.powerups = [];
+  },
+
+  start() {
+    this.reset();
+    this.state = 'playing';
+    this.spawnTicks = 20;   // 开局宽限期
+  },
+
+  tick() {
+    if (this.state !== 'playing') return;
+    const R = Math.random;
+    // 移动（按键或触屏）
+    if (this.keys.left) this.x = Math.max(1, this.x - 1);
+    if (this.keys.right) this.x = Math.min(COLS - 2, this.x + 1);
+    // 自动连发（按攻击模式）
+    this.fireTicks++;
+    if (this.fireTicks >= 3) {
+      this.fireTicks = 0;
+      const bx = this.x, by = this.y - 1;
+      this.bullets.push({ x: bx, y: by, laser: false });
+      if (this.power === 1) {  // 双发
+        this.bullets.push({ x: bx - 1, y: by, laser: false });
+        this.bullets.push({ x: bx + 1, y: by, laser: false });
+      } else if (this.power === 2) {  // 三连发（扇形）
+        this.bullets.push({ x: bx - 1.2, y: by - 0.3, laser: false });
+        this.bullets.push({ x: bx + 1.2, y: by - 0.3, laser: false });
+      } else if (this.power === 3) {  // 激光（贯穿）
+        this.bullets.push({ x: bx, y: by - 6, laser: true });
+      }
+    }
+    // 道具生成（随机，约 8% 每 8 tick）
+    this.powerTicks--;
+    if (this.powerTicks <= 0) {
+      if (R() < 0.08 && this.powerups.length < 2) {
+        this.powerups.push({
+          x: 1 + Math.floor(R() * (COLS - 2)),
+          y: 1,
+          type: 1 + Math.floor(R() * 3)
+        });
+      }
+      this.powerTicks = 8;
+    }
+    // 道具下落 + 拾取
+    this.powerups.forEach(pu => { pu.y += 0.3; });
+    const got = this.powerups.find(pu => Math.abs(pu.x - this.x) < 0.8 && pu.y >= this.y - 0.6);
+    if (got) {
+      this.power = got.type;
+      this.powerTicks = 180;  // 持续约 30 秒
+      this.powerups = this.powerups.filter(pu => pu !== got);
+      sounds.play('golden');
+      this.effects.push({ type: 'power', x: got.x * CELL, y: got.y * CELL, t: 0 });
+    }
+    this.powerups = this.powerups.filter(pu => pu.y < 19);
+    // 敌机生成（递增难度）
+    this.spawnTicks--;
+    if (this.spawnTicks <= 0) {
+      const count = this.score > 300 ? (R() < 0.5 ? 2 : 1) : 1;
+      for (let i = 0; i < count && this.enemies.length < 8; i++) {
+        this.enemies.push({
+          x: 1 + Math.floor(R() * (COLS - 2)),
+          y: 1,
+          type: R() < 0.3 ? 1 : 0
+        });
+      }
+      this.spawnTicks = Math.max(10, 18 - Math.floor(this.score / 80));
+    }
+    // 子弹上移
+    this.bullets = this.bullets.filter(b => {
+      b.y -= b.laser ? 2.5 : 1;
+      return b.y > 0;
+    });
+    // 敌机下移（慢速起步，随分数加速）
+    const speed = 0.25 + Math.min(0.3, this.score / 600);
+    this.enemies.forEach(e => { e.y += e.type === 1 ? speed * 1.5 : speed; });
+    // 子弹打敌机
+    this.bullets.forEach(b => {
+      for (const e of this.enemies) {
+        if (Math.abs(b.x - e.x) < 0.7 && Math.abs(b.y - e.y) < 0.6) {
+          e.hp = (e.hp || 0) - (b.laser ? 2 : 1);
+          if (!b.laser) b.dead = true;
+          this.effects.push({ type: 'boom', x: e.x * CELL, y: e.y * CELL, t: 0 });
+          if ((e.hp || 0) <= 0) {
+            const pts = e.type === 1 ? 30 : 10;
+            this.score += pts;
+            e.dead = true;
+            this.effects.push({ type: 'score', x: e.x * CELL, y: e.y * CELL, text: '+' + pts, t: 0 });
+            // 评语彩蛋（复用贪吃蛇的 COMMENTS）
+            if (this.score >= 100 && Math.floor(this.score / 100) > Math.floor((this.score - pts) / 100)) {
+              showComment();
+            }
+            // 188 觉醒
+            if (!this.awakened && this.score >= 188) {
+              this.awakened = true;
+              this.awakenAt = performance.now();
+              sounds.play('awaken');
+              this.effects.push({ type: 'awakenText', t: 0 });
+            }
+          }
+          break;
+        }
+      }
+    });
+    this.bullets = this.bullets.filter(b => !b.dead);
+    this.enemies = this.enemies.filter(e => !e.dead);
+    // 敌机撞战机 / 撞底
+    for (const e of this.enemies) {
+      if (e.y >= 19) { e.dead = true; this.hit(); continue; }
+      if (Math.abs(e.x - this.x) < 0.8 && e.y >= this.y - 0.6) {
+        e.dead = true;
+        this.hit();
+      }
+    }
+    this.enemies = this.enemies.filter(e => !e.dead);
+  },
+
+  hit() {
+    this.lives--;
+    this.shake = 10;
+    sounds.play('crash');
+    this.effects.push({ type: 'boom', x: this.x * CELL, y: this.y * CELL, t: 0 });
+    if (this.lives <= 0) {
+      this.state = 'over';
+      updateBest(this.score);
+    }
+  }
+};
+
 const game = new Game(document.getElementById('screen'));
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 const sounds = {
@@ -550,9 +936,10 @@ const bestKey = 'snakeBest';
 let best = parseInt(localStorage.getItem(bestKey) || '0', 10) || 0;
 document.getElementById('bestText').textContent = 'BEST ' + best;
 
-function updateBest() {
-  if (game.score > best) {
-    best = game.score;
+function updateBest(scoreVal) {
+  const s = scoreVal !== undefined ? scoreVal : game.score;
+  if (s > best) {
+    best = s;
     localStorage.setItem(bestKey, String(best));
     document.getElementById('bestText').textContent = 'BEST ' + best;
   }
@@ -561,9 +948,12 @@ function updateBest() {
 const stateText = document.getElementById('stateText');
 const btnA = document.getElementById('abA');
 const btnB = document.getElementById('abB');
+const btnC = document.getElementById('abC');
 
 function render(now, dt) {
   const ctx = game.ctx;
+  ctx.save();
+  ctx.scale(SCALE, SCALE);   // 高清渲染：逻辑坐标 250×200 → 画布 500×400
   // ===== 觉醒过渡参数 =====
   // 过渡共 2.5s：0-1.0s 金色脉冲闪光（3 次递增），1.0-2.5s 渐变溶解
   let aw = 0, awF = 0, awG = 0;
@@ -870,9 +1260,288 @@ function render(now, dt) {
   document.getElementById('scoreText').textContent =
     game.combo >= 2 ? 'SCORE ' + game.score + '  COMBO x' + game.combo : 'SCORE ' + game.score;
   const aLabel = game.state === 'paused' ? '继续' : game.state === 'playing' ? '暂停' : '开始';
-  const bLabel = game.state === 'playing' ? '难度 ' + DIFFICULTY[game.difficulty].label : '难度';
+  const cLabel = '难度 ' + DIFFICULTY[game.difficulty].label;
   btnA.lastChild.textContent = aLabel;
-  btnB.lastChild.textContent = bLabel;
+  btnB.lastChild.textContent = '返回';
+  btnC.lastChild.textContent = cLabel;
+  ctx.restore();
+}
+
+// ===== 飞机大战渲染 =====
+function renderShoot(now, dt) {
+  const ctx = game.ctx;
+  const s = shoot;
+  ctx.save();
+  ctx.scale(SCALE, SCALE);
+  // 觉醒过渡（与贪吃蛇同款：1s 闪光 + 1.5s 渐变）
+  let aw = 0, awF = 0;
+  if (s.awakened) {
+    const el = now - s.awakenAt;
+    if (el < 2500) {
+      if (el < 1000) awF = Math.max(0, 1 - el / 1000);
+      aw = Math.min(1, Math.max(0, (el - 1000) / 1500));
+    } else { aw = 1; awF = 0; }
+  }
+  // 背景：动态天气（白昼/黄昏/星夜轮换，每 20 秒切换）+ 觉醒卡通黄昏
+  const WEATHER = ['day', 'dusk', 'night'];
+  const wIdx = Math.floor(now / 20000) % 3;
+  const weather = aw === 1 ? 'dusk' : WEATHER[wIdx];
+  if (aw === 0) {
+    if (weather === 'day') {
+      ctx.fillStyle = '#3a6ea8';
+      ctx.fillRect(0, 0, 250, 200);
+      // 白云
+      ctx.fillStyle = 'rgba(255,255,255,.8)';
+      const d1 = (now / 7000) % 1;
+      ctx.beginPath();
+      ctx.arc(40 + d1 * 90, 30, 7, 0, Math.PI * 2);
+      ctx.arc(48 + d1 * 90, 26, 9, 0, Math.PI * 2);
+      ctx.arc(58 + d1 * 90, 30, 7, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (weather === 'dusk') {
+      const g = ctx.createLinearGradient(0, 0, 0, 200);
+      g.addColorStop(0, '#5a3a7a');
+      g.addColorStop(0.6, '#c07a4a');
+      g.addColorStop(1, '#e8a060');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, 250, 200);
+    } else {
+      ctx.fillStyle = '#0d1024';
+      ctx.fillRect(0, 0, 250, 200);
+      // 星夜
+      const R = Math.random;
+      for (let i = 0; i < 30; i++) {
+        const sx = (i * 47 + 13) % 250, sy = (i * 29 + 7) % 180;
+        ctx.fillStyle = Math.floor(now / 400 + i) % 2 === 0 ? '#e8e8f0' : '#8a8aa0';
+        ctx.fillRect(sx, sy, 2, 2);
+      }
+      // 月亮
+      ctx.fillStyle = '#f0e8c8';
+      ctx.beginPath();
+      ctx.arc(215, 24, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#0d1024';
+      ctx.beginPath();
+      ctx.arc(212, 21, 6.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else {
+    const sky = ctx.createLinearGradient(0, 0, 0, 200);
+    sky.addColorStop(0, `rgba(255,150,80,${aw})`);
+    sky.addColorStop(0.6, `rgba(255,190,120,${aw})`);
+    sky.addColorStop(1, `rgba(255,120,90,${aw})`);
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(0, 0, 250, 200);
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, 250, 200);
+    // 云（卡通黄昏云）
+    ctx.fillStyle = `rgba(255,255,255,${(aw * 0.8).toFixed(2)})`;
+    const drift = (now / 6000) % 1;
+    ctx.beginPath();
+    ctx.arc(40 + drift * 70, 30, 8, 0, Math.PI * 2);
+    ctx.arc(50 + drift * 70, 26, 10, 0, Math.PI * 2);
+    ctx.arc(62 + drift * 70, 30, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(160 + drift * 40, 55, 6, 0, Math.PI * 2);
+    ctx.arc(168 + drift * 40, 52, 8, 0, Math.PI * 2);
+    ctx.arc(177 + drift * 40, 55, 6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // 战机
+  const px2 = s.x * CELL, py2 = s.y * CELL;
+  // 攻击模式标识色（机翼/武器配色随 power 变化）
+  const powerColor = ['#6e7a90', '#4a90d9', '#e8a03a', '#b06ae8'][s.power];
+  if (aw === 0) {
+    // 像素战机（科幻银灰 + 青色座舱 + 模式配色翼尖）
+    ctx.fillStyle = '#aab4c8';                       // 机身
+    ctx.fillRect(px2 + 2, py2 - 3, 6, 4);            // 机头
+    ctx.fillRect(px2 + 1, py2 + 1, 8, 6);            // 机身
+    ctx.fillStyle = powerColor;                      // 机翼（模式色）
+    ctx.fillRect(px2 - 1, py2 + 3, 3, 4);
+    ctx.fillRect(px2 + 8, py2 + 3, 3, 4);
+    ctx.fillStyle = '#4ec9e8';                       // 座舱（青）
+    ctx.fillRect(px2 + 3, py2, 4, 2);
+    ctx.fillStyle = '#e8b64a';                       // 翼尖橙点
+    ctx.fillRect(px2 - 1, py2 + 3, 1, 1);
+    ctx.fillRect(px2 + 10, py2 + 3, 1, 1);
+    // 引擎双焰（模式时更长）
+    const flameH = s.power > 0 ? 5 : 3;
+    ctx.fillStyle = Math.floor(now / 90) % 2 === 0 ? '#f4a03a' : '#f4e04a';
+    ctx.fillRect(px2 + 2, py2 + 7, 2, flameH);
+    ctx.fillRect(px2 + 6, py2 + 7, 2, flameH);
+  } else {
+    // 卡通科幻战机（金属银 + 蓝玻璃座舱 + 橙色机翼 + 双喷焰）
+    const g2 = ctx.createLinearGradient(px2, py2 - 8, px2, py2 + CELL);
+    g2.addColorStop(0, '#e8ecf4');                   // 机背亮银
+    g2.addColorStop(0.5, '#b8c2d4');
+    g2.addColorStop(1, '#8a94a8');                   // 机腹深银
+    ctx.fillStyle = g2;
+    ctx.beginPath();
+    ctx.moveTo(px2 + 5, py2 - 8);                    // 机头尖
+    ctx.quadraticCurveTo(px2 + 14, py2 - 2, px2 + 11, py2 + 5);
+    ctx.quadraticCurveTo(px2 + 8, py2 + 11, px2 + 5, py2 + 11);
+    ctx.quadraticCurveTo(px2 + 2, py2 + 11, px2 - 1, py2 + 5);
+    ctx.quadraticCurveTo(px2 - 4, py2 - 2, px2 + 5, py2 - 8);
+    ctx.fill();
+    // 主翼（模式色，后掠）
+    ctx.fillStyle = powerColor;
+    ctx.beginPath();
+    ctx.moveTo(px2 + 4, py2 + 2);
+    ctx.lineTo(px2 - 4, py2 + 8);
+    ctx.lineTo(px2 + 3, py2 + 9);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(px2 + 6, py2 + 2);
+    ctx.lineTo(px2 + 14, py2 + 8);
+    ctx.lineTo(px2 + 7, py2 + 9);
+    ctx.closePath();
+    ctx.fill();
+    // 尾翼
+    ctx.fillStyle = '#c0c8d8';
+    ctx.beginPath();
+    ctx.moveTo(px2 + 3, py2 + 9);
+    ctx.lineTo(px2 + 1, py2 + 12);
+    ctx.lineTo(px2 + 5, py2 + 10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(px2 + 7, py2 + 9);
+    ctx.lineTo(px2 + 9, py2 + 12);
+    ctx.lineTo(px2 + 5, py2 + 10);
+    ctx.closePath();
+    ctx.fill();
+    // 蓝玻璃座舱
+    ctx.fillStyle = '#4ec9e8';
+    ctx.beginPath();
+    ctx.ellipse(px2 + 5, py2, 3, 2.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';        // 座舱高光
+    ctx.beginPath();
+    ctx.ellipse(px2 + 4.2, py2 - 0.6, 1.4, 0.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 机身高光条
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(px2 + 5, py2 - 7);
+    ctx.lineTo(px2 + 5, py2 - 2);
+    ctx.stroke();
+    // 双引擎喷焰（动画）
+    ctx.fillStyle = Math.floor(now / 90) % 2 === 0 ? '#ffb03a' : '#ffe06a';
+    ctx.beginPath();
+    ctx.moveTo(px2 + 3, py2 + 11);
+    ctx.lineTo(px2 + 3.5, py2 + 16);
+    ctx.lineTo(px2 + 5, py2 + 12);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(px2 + 7, py2 + 11);
+    ctx.lineTo(px2 + 6.5, py2 + 16);
+    ctx.lineTo(px2 + 5, py2 + 12);
+    ctx.closePath();
+    ctx.fill();
+    // 尾焰光晕
+    ctx.fillStyle = 'rgba(255,180,60,0.35)';
+    ctx.beginPath();
+    ctx.arc(px2 + 5, py2 + 14, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // 子弹
+  ctx.fillStyle = aw === 0 ? '#f4e04a' : '#fff7c0';
+  s.bullets.forEach(b => {
+    ctx.fillRect(b.x * CELL + 3, b.y * CELL, 4, 8);
+  });
+  // 敌机
+  s.enemies.forEach(e => {
+    const ex = e.x * CELL, ey = e.y * CELL;
+    if (aw === 0) {
+      ctx.fillStyle = e.type === 1 ? '#e86a5a' : '#c05a8a';
+      ctx.fillRect(ex + 2, ey, 6, 5);
+      ctx.fillRect(ex + 1, ey + 5, 8, 4);
+      ctx.fillRect(ex + 3, ey + 9, 4, 2);
+      ctx.fillStyle = '#ffd8d8';
+      ctx.fillRect(ex + 3, ey + 1, 2, 2);
+      ctx.fillRect(ex + 6, ey + 1, 2, 2);
+    } else {
+      // 卡通 UFO/小怪
+      ctx.fillStyle = e.type === 1 ? '#ff8a6a' : '#d47ab0';
+      ctx.beginPath();
+      ctx.arc(ex + 5, ey + 4, 4, Math.PI, 0);
+      ctx.fill();
+      ctx.fillRect(ex + 1, ey + 4, 8, 3);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(ex + 3, ey + 1, 2, 2);
+      ctx.fillRect(ex + 6, ey + 1, 2, 2);
+    }
+  });
+  // 奖励道具（浮动徽章：蓝=双发 橙=三连发 紫=激光）
+  const PU_COLORS = ['', '#4a90d9', '#e8a03a', '#b06ae8'];
+  const PU_LETTERS = ['', 'D', 'T', 'L'];
+  s.powerups.forEach(pu => {
+    const ux = pu.x * CELL, uy = pu.y * CELL;
+    const bob2 = Math.sin(now / 300 + pu.x) * 1.5;
+    ctx.fillStyle = PU_COLORS[pu.type];
+    ctx.fillRect(ux + 1, uy + 1 + bob2, 8, 8);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 6px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(PU_LETTERS[pu.type], ux + 5, uy + 7 + bob2);
+    ctx.textAlign = 'left';
+  });
+  // 特效
+  s.effects.forEach(ef => {
+    ef.t += dt;
+    if (ef.type === 'boom') {
+      const alpha = Math.max(0, 1 - ef.t / 350);
+      ctx.fillStyle = `rgba(255,160,60,${alpha.toFixed(2)})`;
+      ctx.beginPath();
+      ctx.arc(ef.x + 5, ef.y + 5, 4 + ef.t * 0.02, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (ef.type === 'score') {
+      const alpha = Math.max(0, 1 - ef.t / 550);
+      ctx.fillStyle = aw === 0 ? `rgba(244,224,74,${alpha.toFixed(2)})` : `rgba(60,40,140,${alpha.toFixed(2)})`;
+      ctx.font = 'bold 10px monospace';
+      ctx.fillText(ef.text, ef.x, ef.y - ef.t * 0.04);
+    } else if (ef.type === 'awakenText') {
+      const alpha = Math.max(0, 1 - ef.t / 900);
+      ctx.fillStyle = `rgba(255,255,255,${alpha.toFixed(2)})`;
+      ctx.font = 'bold 14px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('AWAKEN!', 125, 90);
+      ctx.textAlign = 'left';
+    } else if (ef.type === 'power') {
+      const alpha = Math.max(0, 1 - ef.t / 600);
+      ctx.fillStyle = `rgba(255,255,255,${alpha.toFixed(2)})`;
+      ctx.font = 'bold 10px monospace';
+      ctx.fillText('POWER UP!', ef.x, ef.y - ef.t * 0.03);
+    }
+  });
+  s.effects = s.effects.filter(ef => ef.t < 1000);
+  // 觉醒闪光
+  if (awF > 0) {
+    ctx.fillStyle = `rgba(255,200,120,${(Math.min(1, awF * 3) * 0.35).toFixed(2)})`;
+    ctx.fillRect(0, 0, 250, 200);
+  }
+  // 受击震屏
+  if (s.shake > 0) {
+    ctx.save();
+    ctx.translate((Math.random() - 0.5) * s.shake, (Math.random() - 0.5) * s.shake);
+    s.shake--;
+    ctx.restore();
+  }
+  // 状态文字
+  let text = '';
+  if (s.state === 'idle') text = '跳跳\n↑↓ 左右移动\n按任意键开始';
+  else if (s.state === 'over') text = 'GAME OVER\n得分 ' + s.score + '\n按任意键返回';
+  stateText.textContent = text;
+  document.getElementById('scoreText').textContent = 'SCORE ' + s.score;
+  document.getElementById('bestText').textContent = 'BEST ' + best;
+  btnA.lastChild.textContent = '开始';
+  btnB.lastChild.textContent = '返回';
+  btnC.lastChild.textContent = '难度';
+  ctx.restore();
 }
 
 // 游戏逻辑：setTimeout 按 speedMs 走格（保持复古节奏）
@@ -883,17 +1552,106 @@ function loop() {
 
 // 渲染：requestAnimationFrame 60 FPS 驱动（动画平滑）
 let lastFrame = performance.now();
+// 视图状态机：launch（启动问答）| snake（贪吃蛇）| shoot（飞机大战）
+let view = 'launch';
+
+function switchView(v) {
+  view = v;
+  document.getElementById('launch').classList.add('hidden');
+  const isShoot = v === 'shoot';
+  document.getElementById('dpad').style.display = isShoot ? 'none' : 'grid';
+  document.getElementById('shootSlider').style.display = isShoot ? 'block' : 'none';
+  if (v === 'snake') { game.reset(); }
+  else if (v === 'shoot') { shoot.reset(); }
+}
+
+// 滑杆：触摸/鼠标拖动，横向映射战机位置
+const slider = document.getElementById('shootSlider');
+const sliderKnob = document.querySelector('.slider-knob');
+let sliderActive = false, sliderPointer = null;
+
+function sliderMove(cx) {
+  const rect = slider.getBoundingClientRect();
+  const t = Math.max(0, Math.min(1, (cx - rect.left) / rect.width));
+  const n = Math.round(t * (COLS - 3)) + 1;   // 战机网格列 1..23
+  shoot.x = n;
+  sliderKnob.style.left = (t * 100) + '%';
+  if (shoot.state === 'idle' || shoot.state === 'over') {
+    shoot.start();
+    sounds.play('click');
+  }
+}
+
+slider.addEventListener('pointerdown', e => {
+  sliderActive = true;
+  sliderPointer = e.pointerId;
+  try { slider.setPointerCapture(e.pointerId); } catch (err) {}
+  sliderMove(e.clientX);
+});
+slider.addEventListener('pointermove', e => {
+  if (sliderActive && e.pointerId === sliderPointer) sliderMove(e.clientX);
+});
+['pointerup', 'pointercancel'].forEach(ev => {
+  slider.addEventListener(ev, e => {
+    if (e.pointerId === sliderPointer) { sliderActive = false; sliderPointer = null; }
+  });
+});
+
 function frame(now) {
   const dt = Math.min(now - lastFrame, 50);
   lastFrame = now;
-  render(now, dt);
+  if (view === 'snake') render(now, dt);
+  else if (view === 'shoot') { shoot.tick(); renderShoot(now, dt); }
   requestAnimationFrame(frame);
 }
 
 const enterGameplay = new Set([' ', 'p', 'P', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', 'W', 'A', 'S', 'D']);
 
+// 启动页角色：选 A 滑入小男孩，选 B 滑入小女孩（从左侧渐变过渡）
+const launchKid = document.getElementById('launchKid');
+
+// 启动页选择（键盘 ↑↓ + Enter，或 A/B 键确认）
+let launchSel = 'b';
+launchKid.textContent = '👧';
+requestAnimationFrame(() => launchKid.classList.add('show'));
+
+function selectLaunch(next) {
+  launchSel = next;
+  document.getElementById('choiceA').classList.toggle('selected', launchSel === 'a');
+  document.getElementById('choiceB').classList.toggle('selected', launchSel === 'b');
+  launchKid.textContent = launchSel === 'a' ? '👦' : '👧';
+  launchKid.classList.remove('show');
+  void launchKid.offsetWidth;  // 重置动画
+  launchKid.classList.add('show');
+}
+
+function confirmLaunch() {
+  sounds.play('click');
+  switchView(launchSel === 'a' ? 'shoot' : 'snake');
+}
+
+document.getElementById('choiceA').addEventListener('click', () => { selectLaunch('a'); confirmLaunch(); });
+document.getElementById('choiceB').addEventListener('click', () => { selectLaunch('b'); confirmLaunch(); });
+
 function onKey(e) {
   const k = e.key;
+  if (view === 'launch') {
+    if (k === 'ArrowUp' || k === 'ArrowDown') { selectLaunch(launchSel === 'a' ? 'b' : 'a'); e.preventDefault(); }
+    else if (k === 'Enter' || k === 'a' || k === 'A' || k === 'b' || k === 'B') { confirmLaunch(); e.preventDefault(); }
+    else if (k === ' ' || k === 'ArrowLeft' || k === 'ArrowRight') { e.preventDefault(); }
+    return;
+  }
+  if (view === 'shoot') {
+    if (k === 'ArrowLeft' || k === 'a' || k === 'A') { shoot.keys.left = true; shoot.keys.right = false; e.preventDefault(); }
+    else if (k === 'ArrowRight' || k === 'd' || k === 'D') { shoot.keys.right = true; shoot.keys.left = false; e.preventDefault(); }
+    else if (k === ' ' || k === 'p' || k === 'P') { shoot.togglePause ? shoot.togglePause() : 0; e.preventDefault(); }
+    else if (enterGameplay.has(k)) {
+      if (shoot.state === 'idle') { shoot.start(); sounds.play('click'); }
+      else if (shoot.state === 'over') { shoot.reset(); }
+    }
+    return;
+  }
+  // snake
   if (k === 'ArrowUp' || k === 'w' || k === 'W') { game.turn(0, -1); e.preventDefault(); }
   else if (k === 'ArrowDown' || k === 's' || k === 'S') { game.turn(0, 1); e.preventDefault(); }
   else if (k === 'ArrowLeft' || k === 'a' || k === 'A') { game.turn(-1, 0); e.preventDefault(); }
@@ -902,6 +1660,13 @@ function onKey(e) {
 }
 
 document.addEventListener('keydown', onKey);
+document.addEventListener('keyup', e => {
+  if (view === 'shoot') {
+    const k = e.key;
+    if (k === 'ArrowLeft' || k === 'a' || k === 'A') shoot.keys.left = false;
+    if (k === 'ArrowRight' || k === 'd' || k === 'D') shoot.keys.right = false;
+  }
+});
 loop();
 requestAnimationFrame(frame);
 
@@ -920,26 +1685,37 @@ document.addEventListener('keydown', e => {
 });
 
 // 隐藏彩蛋：下键 + B 键同时按住 3 秒 → 直接觉醒
-const secretHold = { down: 0, b: 0, timer: null };
+const secretHold = { down: 0, c: 0, timer: null };
 const SECRET_MS = 3000;
 
 function trySecretAwaken() {
-  if (secretHold.down && secretHold.b && (Date.now() - Math.min(secretHold.down, secretHold.b)) >= SECRET_MS) {
+  if (secretHold.down && secretHold.c && (Date.now() - Math.min(secretHold.down, secretHold.c)) >= SECRET_MS) {
     if (!game.awakened) {
       game.awakened = true;
       game.awakenAt = performance.now();
       game.emitEvent('awaken');
       sounds.play('click');
     }
-    secretHold.down = 0; secretHold.b = 0;
+    secretHold.down = 0; secretHold.c = 0;
     clearTimeout(secretHold.timer);
     secretHold.timer = null;
   }
 }
 
+// D-pad 触屏：snake 转向 / shoot 左右移动（按住持续）
 document.querySelectorAll('.dpad-btn').forEach(btn => {
   const isDown = btn.dataset.dir === '0,1';
+  const isLeft = btn.dataset.dir === '-1,0';
+  const isRight = btn.dataset.dir === '1,0';
   btn.addEventListener('click', () => {
+    if (view === 'shoot') {
+      if (isLeft) shoot.keys.left = true;
+      if (isRight) shoot.keys.right = true;
+      if (shoot.state === 'idle') { shoot.start(); sounds.play('click'); }
+      else if (shoot.state === 'over') { shoot.reset(); }
+      setTimeout(() => { shoot.keys.left = false; shoot.keys.right = false; }, 120);
+      return;
+    }
     const [dx, dy] = btn.dataset.dir.split(',').map(Number);
     game.turn(dx, dy);
     if (game.state === 'idle' || game.state === 'over') handleStartKey();
@@ -955,21 +1731,41 @@ document.querySelectorAll('.dpad-btn').forEach(btn => {
 });
 
 btnA.addEventListener('click', () => {
+  if (view === 'shoot') {
+    if (shoot.state === 'idle') { shoot.start(); sounds.play('click'); }
+    else if (shoot.state === 'over') { shoot.reset(); sounds.play('click'); }
+    return;
+  }
   if (game.state === 'idle' || game.state === 'over') { handleStartKey(); }  // 内部已播放点击声
   else { game.togglePause(); sounds.play('click'); }
 });
 
+// B 键：返回启动页
 btnB.addEventListener('click', () => {
+  if (view === 'launch') return;
+  sounds.play('click');
+  document.getElementById('launch').classList.remove('hidden');
+  if (view === 'shoot') shoot.reset();
+  else game.reset();
+  view = 'launch';
+  // 恢复启动页控件
+  document.getElementById('dpad').style.display = 'grid';
+  document.getElementById('shootSlider').style.display = 'none';
+});
+
+// C 键：难度（仅贪吃蛇）
+btnC.addEventListener('click', () => {
+  if (view !== 'snake') return;
   game.cycleDifficulty();
   sounds.play('click');
 });
 
-btnB.addEventListener('pointerdown', () => {
-  secretHold.b = Date.now();
+btnC.addEventListener('pointerdown', () => {
+  secretHold.c = Date.now();
   clearTimeout(secretHold.timer);
   secretHold.timer = setTimeout(trySecretAwaken, SECRET_MS);
 });
-btnB.addEventListener('pointerup', () => { secretHold.b = 0; clearTimeout(secretHold.timer); secretHold.timer = null; });
+btnC.addEventListener('pointerup', () => { secretHold.c = 0; clearTimeout(secretHold.timer); secretHold.timer = null; });
 </script>
 </body>
 </html>
