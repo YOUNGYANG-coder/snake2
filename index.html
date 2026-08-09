@@ -483,21 +483,24 @@
     animation: launchFade 1.2s ease-out .55s backwards;
   }
   .choice-btn:hover { transform: translateY(-3px); }
-  .choice-wrap.selected .choice-a {
-    border-color: #c0704a;
-    box-shadow:
-      0 5px 16px rgba(192,112,74,.45),
-      inset 0 1px 0 rgba(255,255,255,.85);
+  /* 卡通主题选中反馈（按钮直接加 .selected） */
+  .choice-btn.selected {
     transform: translateY(-3px) scale(1.05);
-    color: #a05030;
+    box-shadow:
+      0 5px 16px rgba(107,74,47,.4),
+      inset 0 1px 0 rgba(255,255,255,.85);
   }
-  .choice-wrap.selected .choice-b {
+  .choice-btn.choice-a.selected {
+    border-color: #c0704a;
+    background: linear-gradient(180deg, #fff0e0, #f5dcc0);
+    color: #a05030;
+    box-shadow: 0 5px 16px rgba(192,112,74,.45), inset 0 1px 0 rgba(255,255,255,.85);
+  }
+  .choice-btn.choice-b.selected {
     border-color: #5a78b4;
-    box-shadow:
-      0 5px 16px rgba(90,120,180,.45),
-      inset 0 1px 0 rgba(255,255,255,.85);
-    transform: translateY(-3px) scale(1.05);
+    background: linear-gradient(180deg, #e8f0ff, #d0ddf5);
     color: #40588a;
+    box-shadow: 0 5px 16px rgba(90,120,180,.45), inset 0 1px 0 rgba(255,255,255,.85);
   }
   .launch-hint {
     position: relative;
