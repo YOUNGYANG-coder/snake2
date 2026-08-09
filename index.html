@@ -1381,6 +1381,30 @@ function renderTetris(now, dt) {
     for (let x = 0; x <= 250; x += CELL) { ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, 200); }
     for (let y = 0; y <= 200; y += CELL) { ctx.moveTo(0, y + 0.5); ctx.lineTo(250, y + 0.5); }
     ctx.stroke();
+    // 两侧装饰：小方块图案（俄罗斯方块机风）
+    ctx.fillStyle = 'rgba(58,58,46,0.25)';
+    const sideCols = Math.floor(TOFF);  // 7
+    for (let c = 0; c < sideCols; c++) {
+      for (let r = 0; r < 20; r++) {
+        // 隔行点阵图案（棋盘格感）
+        if ((c + r) % 4 === 0) {
+          ctx.fillRect(c * CELL + 3, r * CELL + 3, 3, 3);
+        }
+      }
+    }
+    for (let c = sideCols + 10; c < 25; c++) {
+      for (let r = 0; r < 20; r++) {
+        if ((c + r) % 4 === 0) {
+          ctx.fillRect(c * CELL + 3, r * CELL + 3, 3, 3);
+        }
+      }
+    }
+    // 顶部小字"TETRIS"
+    ctx.fillStyle = 'rgba(58,58,46,0.4)';
+    ctx.font = 'bold 6px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('T E T R I S', 125, 7);
+    ctx.textAlign = 'left';
   } else {
     const g = ctx.createLinearGradient(0, 0, 0, 200);
     g.addColorStop(0, `rgba(135,206,235,${aw})`);
@@ -1389,7 +1413,44 @@ function renderTetris(now, dt) {
     ctx.fillRect(0, 0, 250, 200);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, 250, 200);
+    // 卡通装饰：两侧气球 + 云朵
+    ctx.fillStyle = `rgba(255,255,255,${(aw * 0.85).toFixed(2)})`;
+    ctx.beginPath();
+    ctx.arc(18, 40, 7, 0, Math.PI * 2);
+    ctx.arc(25, 36, 9, 0, Math.PI * 2);
+    ctx.arc(34, 40, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(215, 60, 7, 0, Math.PI * 2);
+    ctx.arc(222, 56, 9, 0, Math.PI * 2);
+    ctx.arc(231, 60, 7, 0, Math.PI * 2);
+    ctx.fill();
+    // 气球
+    const bob = Math.sin(now / 500) * 3;
+    ctx.fillStyle = `rgba(232,90,90,${(aw * 0.8).toFixed(2)})`;
+    ctx.beginPath();
+    ctx.ellipse(18, 130 + bob, 6, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = `rgba(120,120,120,${aw.toFixed(2)})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(18, 138 + bob);
+    ctx.lineTo(18, 150 + bob);
+    ctx.stroke();
+    ctx.fillStyle = `rgba(90,140,232,${(aw * 0.8).toFixed(2)})`;
+    ctx.beginPath();
+    ctx.ellipse(232, 145 - bob, 6, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = `rgba(120,120,120,${aw.toFixed(2)})`;
+    ctx.beginPath();
+    ctx.moveTo(232, 153 - bob);
+    ctx.lineTo(232, 165 - bob);
+    ctx.stroke();
   }
+  // 棋盘边框
+  ctx.strokeStyle = aw === 0 ? 'rgba(58,58,46,0.6)' : 'rgba(60,80,140,0.5)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(TOFF * CELL + 0.5, 0.5, TCOLS * CELL, TROWS * CELL);
   // 已落方块
   const drawCell = (bx, by) => {
     const x = (TOFF + bx) * CELL, y = by * CELL;
