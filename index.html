@@ -377,18 +377,6 @@
       0 3px 8px rgba(93,64,48,.18);
     animation: launchFade 1.2s ease-out;
   }
-  .title-text {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    line-height: 1.55;
-  }
-  .title-pixel {
-    display: block;
-    width: 280px;
-    height: 96px;
-    image-rendering: pixelated;
-  }
   .launch-divider {
     position: relative;
     width: 90px;
@@ -428,12 +416,6 @@
     gap: 10px;
     margin-top: 14px;
     animation: launchFade 1.2s ease-out .65s backwards;
-  }
-  .style-label {
-    font-size: 11px;
-    color: #8a6240;
-    letter-spacing: 2px;
-    font-weight: bold;
   }
   .style-btn {
     padding: 6px 18px;
@@ -534,10 +516,7 @@
     <div id="stateText"></div>
     <div id="launch" class="launch style-pixel">
       <div class="launch-bg"></div>
-      <div class="launch-title">
-        <span class="title-text">欢迎来到<br>舒适空间</span>
-        <canvas id="titlePixel" class="title-pixel" width="280" height="96" style="display:none"></canvas>
-      </div>
+      <div class="launch-title">欢迎来到<br>舒适空间</div>
       <div class="launch-divider"></div>
       <div class="launch-step">
         <div class="launch-question">你是谁？</div>
@@ -1219,11 +1198,6 @@ function render(now, dt) {
   btnA.lastChild.textContent = aLabel;
   btnB.lastChild.textContent = '返回';
   btnC.lastChild.textContent = cLabel;
-  // 像素态：LCD 扫描线质感（每 2 逻辑像素一条暗线）
-  if (aw === 0) {
-    ctx.fillStyle = 'rgba(0,0,0,0.09)';
-    for (let y = 0; y < 200; y += 2) ctx.fillRect(0, y, 250, 1);
-  }
   ctx.restore();
 }
 
@@ -1257,6 +1231,21 @@ const tetris = {
     this.state = 'idle';
     this.score = 0;
     this.board = Array.from({ length: TROWS }, () => Array(TCOLS).fill(0));
+    // 经典掌机开局：底部随机布置 2-3 行稀疏方块（留出顶部空间）
+    const rows = 2 + Math.floor(Math.random() * 2);
+    for (let r = TROWS - rows; r < TROWS; r++) {
+      for (let c = 0; c < TCOLS; c++) {
+        if (Math.random() < 0.35) this.board[r][c] = 1;
+      }
+      // 每行至少留 3 个空位，保证可消行
+      const filled = this.board[r].filter(v => v === 1).length;
+      if (filled > TCOLS - 3) {
+        for (let i = 0; i < filled - (TCOLS - 3); i++) {
+          const idx = this.board[r].findIndex(v => v === 1);
+          if (idx >= 0) this.board[r][idx] = 0;
+        }
+      }
+    }
     this.piece = null;
     this.dropTicks = 0;
     this.speed = 30;
@@ -1468,62 +1457,9 @@ function renderTetris(now, dt) {
   btnA.lastChild.textContent = '开始';
   btnB.lastChild.textContent = '返回';
   btnC.lastChild.textContent = '速度 ' + tetris.speed;
-  // 扫描线
-  if (aw === 0) {
-    ctx.fillStyle = 'rgba(0,0,0,0.09)';
-    for (let y = 0; y < 200; y += 2) ctx.fillRect(0, y, 250, 1);
-  }
   ctx.restore();
 }
 
-
-// ===== 点阵标题（方块风启动页标题）=====
-const FONT5x7 = {
-  '欢': ['01110','10001','11111','10001','10001','10101','01010'],
-  '迎': ['01111','10001','11110','10001','10001','10101','01010'],
-  '来': ['00100','01110','10101','11111','00100','00100','01110'],
-  '到': ['01010','01010','11111','00100','00100','10100','11000'],
-  '舒': ['10101','01010','11111','10001','11111','10101','10101'],
-  '适': ['10000','11110','10001','11111','10001','10010','01100'],
-  '空': ['11111','10001','11111','00100','01110','10101','00100'],
-  '间': ['11111','10001','10101','10101','10101','10001','11111'],
-};
-
-function drawPixelTitle() {
-  const c = document.getElementById('titlePixel');
-  const ctx = c.getContext('2d');
-  const chars = ['欢迎来到', '舒适空间'];
-  const CH = 5, CW = 7, S = 6;
-  ctx.fillStyle = '#9e9d24';
-  ctx.fillRect(0, 0, 280, 96);
-  ctx.fillStyle = '#3a3a2e';
-  chars.forEach((line, li) => {
-    [...line].forEach((ch, ci) => {
-      const glyph = FONT5x7[ch];
-      if (!glyph) return;
-      const ox = 40 + ci * (CH + 1) * S;
-      const oy = 8 + li * (CW + 2) * S;
-      glyph.forEach((row, y) => {
-        [...row].forEach((bit, x) => {
-          if (bit === '1') ctx.fillRect(ox + x * S, oy + y * S, S, S);
-        });
-      });
-    });
-  });
-}
-
-function applyLaunchTitle() {
-  const text = document.querySelector('.title-text');
-  const canvas = document.getElementById('titlePixel');
-  if (launchStyle === 'pixel') {
-    text.style.display = 'none';
-    canvas.style.display = 'block';
-    drawPixelTitle();
-  } else {
-    text.style.display = '';
-    canvas.style.display = 'none';
-  }
-}
 
 // ===== 视图路由 =====
 let view = 'launch';   // launch | tetris | snake
@@ -1577,7 +1513,6 @@ function selectStyle(s) {
   const launch = document.getElementById('launch');
   launch.classList.toggle('style-pixel', s === 'pixel');
   launch.classList.toggle('style-cartoon', s === 'cartoon');
-  applyLaunchTitle();
 }
 
 function confirmLaunch() {
