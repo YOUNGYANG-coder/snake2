@@ -132,6 +132,22 @@
       inset 0 -1px 1px rgba(255,255,255,.07),
       0 1px 0 rgba(255,255,255,.06);
   }
+  .comment {
+    color: #f4e04a;
+    font-size: 12px;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .comment.show {
+    opacity: 1;
+    animation: commentPulse 1.2s ease-in-out infinite;
+  }
+  @keyframes commentPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.12); }
+  }
   .gamepad {
     display: flex;
     justify-content: space-between;
@@ -243,6 +259,7 @@
   </div>
   <div class="hud">
     <span id="scoreText">SCORE 0</span>
+    <span id="commentText" class="comment"></span>
     <span id="bestText">BEST 0</span>
   </div>
   <div class="gamepad">
@@ -270,6 +287,8 @@ const DIFFICULTY = {
   fast:   { label: '快', ms: 80 },
 };
 const ORDER = ['slow', 'normal', 'fast'];
+// 彩蛋评语：每跨过 100 分显示一条（6 条循环）
+const COMMENTS = ['这也不行啊', '有点石粒儿', '有我一分水平', '还行吧', '得到我的认可了', '给你点个赞'];
 
 class Game {
   constructor(screen) {
@@ -388,6 +407,10 @@ class Game {
         this.emitEvent('levelup');
         this.effects.push({ type: 'levelup', t: 0 });
       }
+      // 彩蛋：每跨过 100 分触发评语（100/200/300…）
+      if (this.score >= 100 && Math.floor(this.score / 100) > Math.floor((this.score - gained) / 100)) {
+        this.emitEvent('comment');
+      }
       this.emitEvent('eat');
       this.spawnFood();
     } else {
@@ -462,9 +485,22 @@ const sounds = {
   }
 };
 
+const commentEl = document.getElementById('commentText');
+let commentTimer = null;
+let commentIdx = 0;
+
+function showComment() {
+  commentEl.textContent = COMMENTS[commentIdx % COMMENTS.length];
+  commentIdx++;
+  commentEl.classList.add('show');
+  clearTimeout(commentTimer);
+  commentTimer = setTimeout(() => commentEl.classList.remove('show'), 3000);
+}
+
 game.onEvent = ev => {
   if (ev === 'combo') sounds.play('combo');                       // 高连击专属高音，替代 eat
   else if (ev === 'eat' && game.food && game.food.golden) sounds.play('golden');
+  else if (ev === 'comment') showComment();
   else if (ev !== 'eat') sounds.play(ev);                         // combo≥5 时 eat 音被 combo 音替代
   if (ev === 'crash') updateBest();
 };
