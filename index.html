@@ -381,24 +381,24 @@
   .choice-avatar {
     display: none;
   }
-  /* 侧边滑入角色（大 emoji + 渐隐过渡） */
-  .launch-kid {
-    position: absolute;
-    left: -70px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 96px;
-    line-height: 1;
-    opacity: 0;
-    transition: left .7s cubic-bezier(.2,.7,.3,1), opacity .7s ease;
-    pointer-events: none;
-    z-index: 6;
-    filter: drop-shadow(0 6px 14px rgba(93,64,48,.3));
+  /* 确认按钮 */
+  .launch-confirm {
+    position: relative;
+    margin-top: 14px;
+    padding: 8px 26px;
+    border-radius: 20px;
+    border: 2px solid rgba(107,74,47,.4);
+    background: linear-gradient(180deg, #fffaf0, #f0dfc0);
+    color: #6b4a2f;
+    font-family: monospace;
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(107,74,47,.3), inset 0 1px 0 rgba(255,255,255,.9);
+    animation: launchFade 1.2s ease-out .9s backwards;
   }
-  .launch-kid.show {
-    left: 10px;
-    opacity: 1;
-  }
+  .launch-confirm:hover { transform: translateY(-2px); }
   @keyframes avatarFloat {
     0%, 100% { transform: translateY(0) scale(1); }
     50% { transform: translateY(-6px) scale(1.06); }
@@ -465,11 +465,11 @@
       <div class="launch-divider"></div>
       <div class="launch-question">你是谁？</div>
       <div class="launch-choices">
-        <button id="choiceA" class="choice-btn choice-a">A跳跳</button>
-        <button id="choiceB" class="choice-btn choice-b">B田田</button>
+        <button id="choiceA" class="choice-btn choice-a">跳跳</button>
+        <button id="choiceB" class="choice-btn choice-b">田田</button>
       </div>
-      <div id="launchKid" class="launch-kid"></div>
-      <div class="launch-hint">↑↓ 选择 · A/B 确认</div>
+      <button id="launchConfirm" class="launch-confirm" style="display:none">确认开始</button>
+      <div class="launch-hint">←→ 选择角色 · A 确认</div>
     </div>
   </div>
   <div class="hud">
@@ -739,18 +739,19 @@ const shoot = {
   start() {
     this.reset();
     this.state = 'playing';
-    this.spawnTicks = 20;   // 开局宽限期
+    this.spawnTicks = 14;   // 开局稍等即来敌
   },
-
   tick() {
     if (this.state !== 'playing') return;
     const R = Math.random;
-    // 移动（按键或触屏）
-    if (this.keys.left) this.x = Math.max(1, this.x - 1);
-    if (this.keys.right) this.x = Math.min(COLS - 2, this.x + 1);
-    // 自动连发（按攻击模式）
+    // 平滑移动：按键每帧微移（像素精度），滑杆直接设目标；撞墙夹在边界内不判死
+    const SPEED = 0.12;
+    if (this.keys.left) this.x -= SPEED;
+    if (this.keys.right) this.x += SPEED;
+    this.x = Math.max(0.5, Math.min(COLS - 1.5, this.x));
+    // 自动连发（按攻击模式，更密集）
     this.fireTicks++;
-    if (this.fireTicks >= 3) {
+    if (this.fireTicks >= 2) {
       this.fireTicks = 0;
       const bx = this.x, by = this.y - 1;
       this.bullets.push({ x: bx, y: by, laser: false });
@@ -778,7 +779,7 @@ const shoot = {
     }
     // 道具下落 + 拾取
     this.powerups.forEach(pu => { pu.y += 0.3; });
-    const got = this.powerups.find(pu => Math.abs(pu.x - this.x) < 0.8 && pu.y >= this.y - 0.6);
+    const got = this.powerups.find(pu => Math.abs(pu.x - this.x) <= 1.0 && pu.y >= this.y - 0.6);
     if (got) {
       this.power = got.type;
       this.powerTicks = 180;  // 持续约 30 秒
@@ -787,31 +788,42 @@ const shoot = {
       this.effects.push({ type: 'power', x: got.x * CELL, y: got.y * CELL, t: 0 });
     }
     this.powerups = this.powerups.filter(pu => pu.y < 19);
-    // 敌机生成（递增难度）
+    // 敌机生成（向玩家引导：新敌机偏向玩家 x，避免"遇不到敌机"的断档）
     this.spawnTicks--;
     if (this.spawnTicks <= 0) {
-      const count = this.score > 300 ? (R() < 0.5 ? 2 : 1) : 1;
-      for (let i = 0; i < count && this.enemies.length < 8; i++) {
-        this.enemies.push({
-          x: 1 + Math.floor(R() * (COLS - 2)),
-          y: 1,
-          type: R() < 0.3 ? 1 : 0
-        });
+      const maxEnemies = 2 + Math.floor(this.score / 150);
+      if (this.enemies.length < maxEnemies) {
+        for (let attempt = 0; attempt < 5; attempt++) {
+          // 70% 概率偏向玩家 x ±3 格，30% 全随机（保持多样）
+          let ex;
+          if (R() < 0.7) {
+            ex = Math.max(1, Math.min(COLS - 2, Math.round(this.x + (R() - 0.5) * 6)));
+          } else {
+            ex = 1 + Math.floor(R() * (COLS - 2));
+          }
+          const far = this.enemies.every(e => Math.abs(e.x - ex) >= 3);
+          if (far || this.enemies.length === 0) {
+            this.enemies.push({ x: ex, y: 1, type: R() < 0.3 ? 1 : 0 });
+            break;
+          }
+        }
       }
-      this.spawnTicks = Math.max(10, 18 - Math.floor(this.score / 80));
+      this.spawnTicks = Math.max(10, 18 - Math.floor(this.score / 100));
     }
-    // 子弹上移
-    this.bullets = this.bullets.filter(b => {
-      b.y -= b.laser ? 2.5 : 1;
-      return b.y > 0;
+    // 子弹上移（更细更快；碰撞用线段检测防穿透）
+    this.bullets.forEach(b => {
+      b.prevY = b.y;
+      b.y -= b.laser ? 3 : 1.8;
     });
-    // 敌机下移（慢速起步，随分数加速）
-    const speed = 0.25 + Math.min(0.3, this.score / 600);
-    this.enemies.forEach(e => { e.y += e.type === 1 ? speed * 1.5 : speed; });
-    // 子弹打敌机
+    this.bullets = this.bullets.filter(b => b.y > 0);
+    // 敌机下移（更快起步，随分数加速）
+    const speed = 0.2 + Math.min(0.25, this.score / 700);
+    this.enemies.forEach(e => { e.y += e.type === 1 ? speed * 1.4 : speed; });
+    // 子弹打敌机（线段相交：起点 prevY → 终点 y 扫过敌机判定）
     this.bullets.forEach(b => {
       for (const e of this.enemies) {
-        if (Math.abs(b.x - e.x) < 0.7 && Math.abs(b.y - e.y) < 0.6) {
+        const yFrom = Math.min(b.prevY, b.y), yTo = Math.max(b.prevY, b.y);
+        if (Math.abs(b.x - e.x) <= 1.0 && e.y >= yFrom - 0.6 && e.y <= yTo + 0.6) {
           e.hp = (e.hp || 0) - (b.laser ? 2 : 1);
           if (!b.laser) b.dead = true;
           this.effects.push({ type: 'boom', x: e.x * CELL, y: e.y * CELL, t: 0 });
@@ -838,10 +850,10 @@ const shoot = {
     });
     this.bullets = this.bullets.filter(b => !b.dead);
     this.enemies = this.enemies.filter(e => !e.dead);
-    // 敌机撞战机 / 撞底
+    // 敌机撞战机（判定更宽容：仅机身范围）/ 撞底
     for (const e of this.enemies) {
       if (e.y >= 19) { e.dead = true; this.hit(); continue; }
-      if (Math.abs(e.x - this.x) < 0.8 && e.y >= this.y - 0.6) {
+      if (Math.abs(e.x - this.x) <= 0.7 && e.y >= this.y - 0.4) {
         e.dead = true;
         this.hit();
       }
@@ -1448,10 +1460,15 @@ function renderShoot(now, dt) {
     ctx.arc(px2 + 5, py2 + 14, 4, 0, Math.PI * 2);
     ctx.fill();
   }
-  // 子弹
+  // 子弹（细弹：2×6 像素）
   ctx.fillStyle = aw === 0 ? '#f4e04a' : '#fff7c0';
   s.bullets.forEach(b => {
-    ctx.fillRect(b.x * CELL + 3, b.y * CELL, 4, 8);
+    if (b.laser) {
+      ctx.fillStyle = aw === 0 ? '#e86aff' : '#ffd0ff';
+      ctx.fillRect(b.x * CELL + 3.5, b.y * CELL, 3, 14);
+    } else {
+      ctx.fillRect(b.x * CELL + 4, b.y * CELL, 2, 6);
+    }
   });
   // 敌机
   s.enemies.forEach(e => {
@@ -1573,7 +1590,7 @@ let sliderActive = false, sliderPointer = null;
 function sliderMove(cx) {
   const rect = slider.getBoundingClientRect();
   const t = Math.max(0, Math.min(1, (cx - rect.left) / rect.width));
-  const n = Math.round(t * (COLS - 3)) + 1;   // 战机网格列 1..23
+  const n = 0.5 + t * (COLS - 2);   // 平滑映射 0.5..23.5
   shoot.x = n;
   sliderKnob.style.left = (t * 100) + '%';
   if (shoot.state === 'idle' || shoot.state === 'over') {
@@ -1607,38 +1624,34 @@ function frame(now) {
 
 const enterGameplay = new Set([' ', 'p', 'P', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', 'W', 'A', 'S', 'D']);
 
-// 启动页角色：选 A 滑入小男孩，选 B 滑入小女孩（从左侧渐变过渡）
-const launchKid = document.getElementById('launchKid');
-
-// 启动页选择（键盘 ↑↓ + Enter，或 A/B 键确认）
-let launchSel = 'b';
-launchKid.textContent = '👧';
-requestAnimationFrame(() => launchKid.classList.add('show'));
+// 启动页选择：←→ 选角色，A/确认按钮进入游戏
+let launchSel = null;
 
 function selectLaunch(next) {
   launchSel = next;
   document.getElementById('choiceA').classList.toggle('selected', launchSel === 'a');
   document.getElementById('choiceB').classList.toggle('selected', launchSel === 'b');
-  launchKid.textContent = launchSel === 'a' ? '👦' : '👧';
-  launchKid.classList.remove('show');
-  void launchKid.offsetWidth;  // 重置动画
-  launchKid.classList.add('show');
+  launchConfirm.style.display = 'inline-block';
 }
 
 function confirmLaunch() {
+  if (!launchSel) { selectLaunch('b'); }
   sounds.play('click');
   switchView(launchSel === 'a' ? 'shoot' : 'snake');
 }
 
-document.getElementById('choiceA').addEventListener('click', () => { selectLaunch('a'); confirmLaunch(); });
-document.getElementById('choiceB').addEventListener('click', () => { selectLaunch('b'); confirmLaunch(); });
+document.getElementById('choiceA').addEventListener('click', () => selectLaunch('a'));
+document.getElementById('choiceB').addEventListener('click', () => selectLaunch('b'));
+launchConfirm.addEventListener('click', confirmLaunch);
 
 function onKey(e) {
   const k = e.key;
   if (view === 'launch') {
-    if (k === 'ArrowUp' || k === 'ArrowDown') { selectLaunch(launchSel === 'a' ? 'b' : 'a'); e.preventDefault(); }
-    else if (k === 'Enter' || k === 'a' || k === 'A' || k === 'b' || k === 'B') { confirmLaunch(); e.preventDefault(); }
-    else if (k === ' ' || k === 'ArrowLeft' || k === 'ArrowRight') { e.preventDefault(); }
+    // ←/→ 选择角色，A 键确认进入
+    if (k === 'ArrowLeft' || k === 'ArrowRight') { selectLaunch(launchSel === 'a' ? 'b' : 'a'); e.preventDefault(); }
+    else if (k === 'a' || k === 'A' || k === 'Enter') { confirmLaunch(); e.preventDefault(); }
+    else if (k === 'b' || k === 'B') { selectLaunch('b'); e.preventDefault(); }
+    else if (k === ' ') { e.preventDefault(); }
     return;
   }
   if (view === 'shoot') {
