@@ -161,49 +161,15 @@
       inset 0 -1px 1px rgba(255,255,255,.06);
     -webkit-tap-highlight-color: transparent;
   }
-  .dpad {
-    display: grid;
-    grid-template-columns: repeat(3, 54px);
-    grid-template-rows: repeat(3, 54px);
-    justify-items: center;
-    align-items: center;
-  }
-  .dpad-btn {
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    border: none;
-    background:
-      radial-gradient(circle at 35% 28%, #838383 0%, #5c5c5c 35%, #3a3a3a 78%, #2c2c2c 100%);
-    color: #e2e2e2;
-    font-size: 20px;
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow:
-      0 4px 0 #1d1d1d,
-      0 6px 10px rgba(0,0,0,.45),
-      inset 0 2px 2px rgba(255,255,255,.25),
-      inset 0 -3px 4px rgba(0,0,0,.3);
-    cursor: pointer;
-    user-select: none;
-    touch-action: none;
-  }
-  .dpad-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #1d1d1d, 0 2px 4px rgba(0,0,0,.35), inset 0 2px 2px rgba(255,255,255,.18); }
-  .pad-up    { grid-area: 1 / 2; }
-  .pad-left  { grid-area: 2 / 1; }
-  .pad-right { grid-area: 2 / 3; }
-  .pad-down  { grid-area: 3 / 2; }
   .ab-btns {
     display: flex;
-    flex-direction: column;
-    gap: 16px;
+    flex-direction: row;
+    gap: 14px;
     align-items: center;
   }
   .ab-btn {
-    width: 62px;
-    height: 62px;
+    width: 58px;
+    height: 58px;
     border-radius: 50%;
     border: none;
     color: #eee;
@@ -224,6 +190,44 @@
     -webkit-tap-highlight-color: transparent;
   }
   .ab-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #1c1c1c, 0 2px 4px rgba(0,0,0,.3), inset 0 2px 2px rgba(255,255,255,.15); }
+  .joystick {
+    position: relative;
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #3d3d3d, #232323 70%);
+    box-shadow:
+      inset 0 3px 8px rgba(0,0,0,.65),
+      inset 0 -1px 2px rgba(255,255,255,.07),
+      0 2px 5px rgba(0,0,0,.4);
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .joystick::after {
+    content: '';
+    position: absolute;
+    inset: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,.08);
+    box-shadow: inset 0 0 8px rgba(0,0,0,.3);
+  }
+  .stick-knob {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 52px;
+    height: 52px;
+    margin: -26px 0 0 -26px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 28%, #7a7a7a 0%, #4a4a4a 55%, #333 100%);
+    box-shadow:
+      0 3px 6px rgba(0,0,0,.5),
+      inset 0 2px 3px rgba(255,255,255,.25),
+      inset 0 -3px 5px rgba(0,0,0,.3);
+    pointer-events: none;
+  }
   .footer-brand {
     text-align: center;
     margin-top: 14px;
@@ -263,15 +267,12 @@
     <span id="bestText">BEST 0</span>
   </div>
   <div class="gamepad">
-    <div class="dpad">
-      <button class="dpad-btn pad-up" data-dir="0,-1" aria-label="上">▲</button>
-      <button class="dpad-btn pad-left" data-dir="-1,0" aria-label="左">◀</button>
-      <button class="dpad-btn pad-right" data-dir="1,0" aria-label="右">▶</button>
-      <button class="dpad-btn pad-down" data-dir="0,1" aria-label="下">▼</button>
-    </div>
     <div class="ab-btns">
       <button id="abA" class="ab-btn btn-a"><span class="ab-letter">A</span><span class="ab-sub">开始</span></button>
-      <button id="abB" class="ab-btn btn-b"><span class="ab-letter">B</span><span class="ab-sub">暂停</span></button>
+      <button id="abB" class="ab-btn btn-b"><span class="ab-letter">B</span><span class="ab-sub">难度</span></button>
+    </div>
+    <div id="joystick" class="joystick">
+      <div id="stickKnob" class="stick-knob"></div>
     </div>
   </div>
   <div class="footer-easter">
@@ -310,7 +311,7 @@ class Game {
     this.alive = true;
     this.paused = false;
     this.state = 'idle';
-    this.food = null;
+    this.foods = [];
     this.poison = null;
     this.headFlash = 0;
     this.combo = 0;
@@ -325,34 +326,49 @@ class Game {
     this.spawnPoison();
   }
 
+  // 生成 2-3 个普通加分食物（随机分布）；COMBO≥3 时第一个优先追击蛇头
   spawnFood() {
-    const isGolden = Math.random() < 0.2;
+    const count = 2 + Math.floor(Math.random() * 2); // 2 或 3
     const head = this.snake[0];
-    // COMBO≥3 追击：优先在蛇头当前方向直线首格生成
+    const freeCells = () => {
+      const list = [];
+      for (let x = 0; x < COLS; x++) {
+        for (let y = 0; y < ROWS; y++) {
+          if (!this.snake.some(s => s.x === x && s.y === y)
+              && !(this.poison && this.poison.x === x && this.poison.y === y)
+              && !this.foods.some(f => f.x === x && f.y === y)) {
+            list.push({ x, y });
+          }
+        }
+      }
+      return list;
+    };
+    const list = freeCells();
+    if (list.length === 0) return; // 蛇填满全屏时保留现有食物
+    const foods = [];
+    // COMBO≥3 追击：第一个食物放蛇头直线前方
     if (this.combo >= 3 && head) {
       const tx = head.x + this.dir.x, ty = head.y + this.dir.y;
       const free = tx >= 0 && tx < COLS && ty >= 0 && ty < ROWS
         && !this.snake.some(s => s.x === tx && s.y === ty)
         && !(this.poison && this.poison.x === tx && this.poison.y === ty);
-      if (free) { this.food = { x: tx, y: ty, golden: isGolden }; return; }
-    }
-    const empty = [];
-    for (let x = 0; x < COLS; x++) {
-      for (let y = 0; y < ROWS; y++) {
-        if (!this.snake.some(s => s.x === x && s.y === y) && !(this.poison && this.poison.x === x && this.poison.y === y)) {
-          empty.push({ x, y });
-        }
+      if (free) {
+        foods.push({ x: tx, y: ty, golden: Math.random() < 0.2 });
       }
     }
-    if (empty.length === 0) return; // 蛇填满全屏时保留现有 food
-    this.food = { x: empty[Math.floor(Math.random() * empty.length)].x, y: empty[Math.floor(Math.random() * empty.length)].y, golden: isGolden };
+    while (foods.length < count && list.length > 0) {
+      const i = Math.floor(Math.random() * list.length);
+      const p = list.splice(i, 1)[0];
+      foods.push({ x: p.x, y: p.y, golden: Math.random() < 0.2 });
+    }
+    this.foods = foods;
   }
 
   spawnPoison() {
     const empty = [];
     for (let x = 0; x < COLS; x++) {
       for (let y = 0; y < ROWS; y++) {
-        if (!this.snake.some(s => s.x === x && s.y === y) && !(this.food && this.food.x === x && this.food.y === y)) {
+        if (!this.snake.some(s => s.x === x && s.y === y) && !this.foods.some(f => f.x === x && f.y === y)) {
           empty.push({ x, y });
         }
       }
@@ -393,13 +409,15 @@ class Game {
       this.emitEvent('crash'); return;
     }
     this.snake.unshift(head);
-    const atFood = this.food && head.x === this.food.x && head.y === this.food.y;
+    const foodIdx = this.foods.findIndex(f => head.x === f.x && head.y === f.y);
+    const atFood = foodIdx >= 0;
     const atPoison = this.poison && head.x === this.poison.x && head.y === this.poison.y;
     if (atFood) {
       // COMBO：窗口内连续吃食连击递增，得分 = 基础分 × (1 + 0.1×combo)，上限 9
       this.combo = this.comboTicks > 0 ? Math.min(this.combo + 1, 9) : 1;
       this.comboTicks = 15;
-      const pts = this.food.golden ? 20 : 10;
+      const eaten = this.foods.splice(foodIdx, 1)[0];
+      const pts = eaten.golden ? 20 : 10;
       const gained = Math.round(pts * (1 + 0.1 * this.combo));
       this.score += gained;
       this.headFlash = 6;
@@ -419,8 +437,8 @@ class Game {
         this.awakenAt = performance.now();
         this.emitEvent('awaken');
       }
-      this.emitEvent('eat');
-      this.spawnFood();
+      this.emitEvent(eaten.golden ? 'golden' : 'eat');
+      if (this.foods.length === 0) this.spawnFood(); // 全部吃完才补新一批
     } else {
       this.snake.pop();
     }
@@ -521,9 +539,10 @@ function showComment() {
 game.onEvent = ev => {
   if (ev === 'awaken') sounds.play('awaken');                     // 超级彩蛋号角
   else if (ev === 'combo') sounds.play('combo');                  // 高连击专属高音，替代 eat
-  else if (ev === 'eat' && game.food && game.food.golden) sounds.play('golden');
+  else if (ev === 'golden') sounds.play('golden');                // 金色食物专属高音
+  else if (ev === 'eat') sounds.play('eat');
   else if (ev === 'comment') showComment();
-  else if (ev !== 'eat') sounds.play(ev);                         // combo≥5 时 eat 音被 combo 音替代
+  else sounds.play(ev);
   if (ev === 'crash') updateBest();
 };
 
@@ -707,13 +726,13 @@ function render(now, dt) {
     ctx.arc(pts[0].x + 5, pts[0].y + 5, CELL * 0.4, 0, Math.PI * 2);
     ctx.fill();
   }
-  // 食物：像素方块 / 卡通苹果（觉醒后）；金色钻石 / 金苹果
+  // 食物：多个（像素方块 / 卡通苹果，觉醒后）；金色钻石 / 金苹果
   const blinkBase = game.combo >= 3 ? 150 : 300;
   const blink = Math.floor(performance.now() / blinkBase) % 2 === 0;
-  if (game.food) {
-    const cx = game.food.x * CELL + CELL / 2, cy = game.food.y * CELL + CELL / 2;
+  game.foods.forEach(fd => {
+    const cx = fd.x * CELL + CELL / 2, cy = fd.y * CELL + CELL / 2;
     if (aw === 0) {
-      if (game.food.golden) {
+      if (fd.golden) {
         ctx.fillStyle = '#5c4a00';
         ctx.beginPath();
         ctx.moveTo(cx, cy - 4); ctx.lineTo(cx + 4, cy); ctx.lineTo(cx, cy + 4); ctx.lineTo(cx - 4, cy);
@@ -728,11 +747,11 @@ function render(now, dt) {
         }
       } else if (blink) {
         ctx.fillStyle = '#3a3a2e';
-        ctx.fillRect(game.food.x * CELL + 2, game.food.y * CELL + 2, CELL - 4, CELL - 4);
+        ctx.fillRect(fd.x * CELL + 2, fd.y * CELL + 2, CELL - 4, CELL - 4);
       }
     } else {
       // 卡通苹果
-      const appleCol = game.food.golden ? ['#f4d03f', '#d4a017'] : ['#e74c3c', '#b03a2e'];
+      const appleCol = fd.golden ? ['#f4d03f', '#d4a017'] : ['#e74c3c', '#b03a2e'];
       const g3 = ctx.createRadialGradient(cx - 1, cy - 2, 1, cx, cy, 5);
       g3.addColorStop(0, appleCol[0]);
       g3.addColorStop(1, appleCol[1]);
@@ -757,7 +776,7 @@ function render(now, dt) {
       ctx.ellipse(cx - 1.5, cy - 1, 1.2, 0.8, 0, 0, Math.PI * 2);
       ctx.fill();
     }
-  }
+  });
   // 毒食物：像素骷髅 / 卡通幽灵（觉醒后）
   if (game.poison) {
     const nearEnd = game.poison.ttl <= 8;
@@ -900,12 +919,53 @@ document.addEventListener('keydown', e => {
   if (enterGameplay.has(e.key)) handleStartKey();
 });
 
-document.querySelectorAll('.dpad-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const [dx, dy] = btn.dataset.dir.split(',').map(Number);
-    game.turn(dx, dy);
-    if (game.state === 'idle' || game.state === 'over') handleStartKey();
-  });
+// 摇杆：触摸/鼠标拖动，四方向判定，松手回弹
+const joystick = document.getElementById('joystick');
+const stickKnob = document.getElementById('stickKnob');
+const STICK_RANGE = 34;   // 摇杆最大位移（px）
+const STICK_DEAD = 10;    // 死区：小于此位移不触发转向
+let stickActive = false;
+let stickPointerId = null;
+
+function stickToDir(dx, dy) {
+  const ax = Math.abs(dx), ay = Math.abs(dy);
+  if (ax < STICK_DEAD && ay < STICK_DEAD) return;
+  if (ax >= ay) game.turn(dx > 0 ? 1 : -1, 0);
+  else game.turn(0, dy > 0 ? 1 : -1);
+  if (game.state === 'idle' || game.state === 'over') handleStartKey();
+}
+
+function stickMove(cx, cy) {
+  const rect = joystick.getBoundingClientRect();
+  const ox = cx - (rect.left + rect.width / 2);
+  const oy = cy - (rect.top + rect.height / 2);
+  const len = Math.hypot(ox, oy);
+  const clamp = len > STICK_RANGE ? STICK_RANGE / len : 1;
+  const nx = ox * clamp, ny = oy * clamp;
+  stickKnob.style.transform = `translate(${nx}px, ${ny}px)`;
+  stickToDir(nx, ny);
+}
+
+function stickEnd() {
+  stickActive = false;
+  stickPointerId = null;
+  stickKnob.style.transform = 'translate(0, 0)';
+}
+
+joystick.addEventListener('pointerdown', e => {
+  stickActive = true;
+  stickPointerId = e.pointerId;
+  try { joystick.setPointerCapture(e.pointerId); } catch (err) { /* 合成事件无活动指针时忽略 */ }
+  stickMove(e.clientX, e.clientY);
+});
+joystick.addEventListener('pointermove', e => {
+  if (stickActive && e.pointerId === stickPointerId) stickMove(e.clientX, e.clientY);
+});
+joystick.addEventListener('pointerup', e => {
+  if (e.pointerId === stickPointerId) stickEnd();
+});
+joystick.addEventListener('pointercancel', e => {
+  if (e.pointerId === stickPointerId) stickEnd();
 });
 
 btnA.addEventListener('click', () => {
