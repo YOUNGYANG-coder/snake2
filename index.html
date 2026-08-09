@@ -351,6 +351,7 @@
   .launch-bg {
     position: absolute;
     inset: -25%;
+    pointer-events: none;   /* 纯背景层，不拦截任何点击 */
     background:
       radial-gradient(ellipse at 28% 22%, rgba(255,236,200,.85), transparent 45%),
       radial-gradient(ellipse at 78% 78%, rgba(255,205,150,.7), transparent 50%),
@@ -393,10 +394,11 @@
     letter-spacing: 4px;
     animation: launchFade 1.2s ease-out .35s backwards;
   }
-  .launch-step { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .launch-step { display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative; z-index: 2; }
   .launch-step.hidden-step { display: none; }
   .launch-choices {
     position: relative;
+    z-index: 2;
     display: flex;
     gap: 34px;
     animation: launchFade 1.2s ease-out .55s backwards;
@@ -412,6 +414,7 @@
   }
   .launch-style-row {
     position: relative;
+    z-index: 2;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -439,6 +442,8 @@
   }
   /* 确认按钮 */
   .launch-confirm {
+    position: relative;
+    z-index: 2;
     position: relative;
     margin-top: 14px;
     padding: 8px 26px;
