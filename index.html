@@ -692,12 +692,6 @@ class Game {
       if (this.score >= 100 && Math.floor(this.score / 100) > Math.floor((this.score - gained) / 100)) {
         this.emitEvent('comment');
       }
-      // 超级彩蛋：跨过 188 分觉醒，画风切换
-      if (!this.awakened && this.score >= 188) {
-        this.awakened = true;
-        this.awakenAt = performance.now();
-        this.emitEvent('awaken');
-      }
       this.emitEvent(eaten.golden ? 'golden' : 'eat');
       if (this.foods.length === 0) this.spawnFood(); // 全部吃完才补新一批
     } else {
@@ -721,9 +715,8 @@ class Game {
 
   start() {
     this.reset();
-    // 开局按当前全局画风设置（像素模式觉醒状态清零，卡通模式保持卡通）
+    // 开局按当前全局画风设置（像素模式清零，卡通模式保持卡通）
     this.awakened = typeof launchStyle !== 'undefined' && launchStyle === 'cartoon';
-    this.awakenAt = this.awakened ? performance.now() - 99999 : 0;
     this.state = 'playing';
   }
 
@@ -759,19 +752,6 @@ const sounds = {
         });
         return;
       }
-      if (name === 'awaken') {
-        [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
-          const o = audioCtx.createOscillator();
-          const g = audioCtx.createGain();
-          o.connect(g); g.connect(audioCtx.destination);
-          o.frequency.value = f; o.type = 'square';
-          g.gain.setValueAtTime(0.12, t + i * 0.11);
-          g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.11 + 0.2);
-          o.start(t + i * 0.11);
-          o.stop(t + i * 0.11 + 0.22);
-        });
-        return;
-      }
       const o = audioCtx.createOscillator();
       const g = audioCtx.createGain();
       o.connect(g); g.connect(audioCtx.destination);
@@ -801,8 +781,7 @@ function showComment() {
 }
 
 game.onEvent = ev => {
-  if (ev === 'awaken') sounds.play('awaken');                     // 超级彩蛋号角
-  else if (ev === 'combo') sounds.play('combo');                  // 高连击专属高音，替代 eat
+  if (ev === 'combo') sounds.play('combo');                  // 高连击专属高音，替代 eat
   else if (ev === 'golden') sounds.play('golden');                // 金色食物专属高音
   else if (ev === 'eat') sounds.play('eat');
   else if (ev === 'comment') showComment();
@@ -832,18 +811,9 @@ function render(now, dt) {
   const ctx = game.ctx;
   ctx.save();
   ctx.scale(SCALE, SCALE);   // 高清渲染：逻辑坐标 250×200 → 画布 500×400
-  // ===== 觉醒过渡参数 =====
-  // 过渡共 2.5s：0-1.0s 金色脉冲闪光（3 次递增），1.0-2.5s 渐变溶解
-  let aw = 0, awF = 0;
-  if (game.awakened) {
-    const el = now - game.awakenAt;
-    if (el < 100) {
-      awF = Math.max(0, 1 - el / 100);
-      aw = 0;
-    } else { aw = 1; awF = 0; }   // 瞬时切换：100ms 内完成
-  }
-  const awakenFx = game.awakened && awF > 0;
-  // 背景：LCD 绿 → 卡通天空蓝（觉醒后）
+  // 画风：像素 / 卡通（由启动页选择，无中途切换）
+  const aw = game.awakened ? 1 : 0;
+  // 背景：LCD 绿 → 卡通天空蓝
   if (aw === 0) {
     ctx.fillStyle = '#9e9d24';
     ctx.fillRect(0, 0, 250, 200);
@@ -1138,12 +1108,6 @@ function render(now, dt) {
     }
   });
   game.effects = game.effects.filter(ef => ef.t < 1000);
-  // 觉醒闪光演出（3 次金色脉冲，递增）
-  if (awakenFx) {
-    const flash = Math.min(1, awF * 3) * 0.35;
-    ctx.fillStyle = `rgba(255,214,64,${flash.toFixed(2)})`;
-    ctx.fillRect(0, 0, 250, 200);
-  }
   // 屏幕红闪（撞墙/撞自己）
   if (game.state === 'over' && Math.floor(performance.now() / 150) % 2 === 0) {
     ctx.fillStyle = 'rgba(140,30,20,0.28)';
@@ -1193,7 +1157,6 @@ const tetris = {
   dropTicks: 0,
   speed: 30,
   awakened: false,
-  awakenAt: 0,
   effects: [],
 
   SHAPES: {
@@ -1252,15 +1215,13 @@ const tetris = {
     this.dropTicks = 0;
     this.speed = this.TDIFF[this.tDiff].ticks;
     this.awakened = false;
-    this.awakenAt = 0;
     this.effects = [];
   },
 
   start() {
     this.reset();
-    // 开局按当前全局画风设置（像素模式觉醒状态清零，卡通模式保持卡通）
+    // 开局按当前全局画风设置（像素模式清零，卡通模式保持卡通）
     this.awakened = typeof launchStyle !== 'undefined' && launchStyle === 'cartoon';
-    this.awakenAt = this.awakened ? performance.now() - 99999 : 0;
     this.state = 'playing';
     this.spawn();
   },
@@ -1344,12 +1305,6 @@ const tetris = {
       if (this.score >= 100 && Math.floor(this.score / 100) > Math.floor((this.score - pts) / 100)) {
         showComment();
       }
-      // 188 觉醒
-      if (!this.awakened && this.score >= 188) {
-        this.awakened = true;
-        this.awakenAt = performance.now();
-        sounds.play('awaken');
-      }
       // 加速
       this.speed = Math.max(this.TDIFF.fast.ticks, this.TDIFF[this.tDiff].ticks - Math.floor(this.score / 100) * 2);
     }
@@ -1377,12 +1332,8 @@ function renderTetris(now, dt) {
   const ctx = game.ctx;
   ctx.save();
   ctx.scale(SCALE, SCALE);
-  let aw = 0, awF = 0;
-  if (tetris.awakened) {
-    const el = now - tetris.awakenAt;
-    if (el < 100) { awF = Math.max(0, 1 - el / 100); aw = 0; }
-    else { aw = 1; awF = 0; }
-  }
+  // 画风：像素 / 卡通（由启动页选择，无中途切换）
+  const aw = tetris.awakened ? 1 : 0;
   // 背景
   if (aw === 0) {
     ctx.fillStyle = '#9e9d24';
@@ -1518,11 +1469,6 @@ function renderTetris(now, dt) {
     }
   });
   tetris.effects = tetris.effects.filter(ef => ef.t < 1000);
-  // 觉醒闪光
-  if (awF > 0) {
-    ctx.fillStyle = `rgba(255,214,64,${(Math.min(1, awF * 3) * 0.35).toFixed(2)})`;
-    ctx.fillRect(0, 0, 250, 200);
-  }
   // 状态文字
   let text = '';
   if (tetris.state === 'idle') text = 'TETRIS\n按任意键开始';
@@ -1548,11 +1494,9 @@ function switchView(v, style) {
   if (v === 'tetris') {
     tetris.reset();
     tetris.awakened = useCartoon;
-    tetris.awakenAt = useCartoon ? performance.now() - 99999 : 0;
   } else if (v === 'snake') {
     game.reset();
     game.awakened = useCartoon;
-    game.awakenAt = useCartoon ? performance.now() - 99999 : 0;
   }
 }
 
