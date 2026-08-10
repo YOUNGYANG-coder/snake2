@@ -1214,6 +1214,7 @@ const TOFF = 7.5;   // 10 列在 25 列画布中居中偏移
 const tetris = {
   state: 'idle',       // idle | playing | over
   score: 0,
+  lines: 0,            // 累计消行数（评语彩蛋按每 2 行触发）
   board: [],
   piece: null,         // {shape, x, y}
   dropTicks: 0,
@@ -1243,6 +1244,7 @@ const tetris = {
   reset() {
     this.state = 'idle';
     this.score = 0;
+    this.lines = 0;
     this.tDiff = 'normal';
     this.board = Array.from({ length: TROWS }, () => Array(TCOLS).fill(0));
     // 掌机开局：随机抽 2-3 个完整 tetromino（含随机旋转）在底部堆叠
@@ -1360,11 +1362,12 @@ const tetris = {
       // 难度分：慢/中/快 → 每行 10/20/30，多行按 1:3:5:8 倍数
       const pts = ([0, 1, 3, 5, 8][cleared] || 8) * this.TDIFF[this.tDiff].pts;
       this.score += pts;
+      this.lines += cleared;
       this.effects.push({ type: 'line', x: 125, y: 80, text: '+' + pts, t: 0 });
       if (cleared >= 2) sounds.play('levelup');
       else sounds.play('eat');
-      // 评语彩蛋
-      if (this.score >= 100 && Math.floor(this.score / 100) > Math.floor((this.score - pts) / 100)) {
+      // 评语彩蛋：每累计消 2 行触发一次（分数随难度自然不同）
+      if (Math.floor(this.lines / 2) > Math.floor((this.lines - cleared) / 2)) {
         showComment();
       }
       // 加速
