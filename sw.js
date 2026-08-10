@@ -1,9 +1,11 @@
-const CACHE = 'snake2-v1';
+const CACHE = 'snake2-v2';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './icon-512.png',
+  './田田.png',
+  './跳跳.png',
 ];
 
 self.addEventListener('install', e => {
