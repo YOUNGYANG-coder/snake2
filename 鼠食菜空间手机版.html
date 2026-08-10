@@ -898,8 +898,8 @@ function render(now, dt) {
       ctx.fillRect(p.x + 1, p.y + 1, CELL - 2, CELL - 2);
     });
   } else {
-    // 卡通风格：连贯蛇身（曲线身体 + 圆润大头 + 腮红）
-    const bodyCol = hot ? ['#8ee06a', '#4e9a35'] : ['#6fc05a', '#3d7a35'];
+    // 卡通风格：老鼠队列（身体连成串 + 每节小耳朵 + 鼠头 + 长尾）
+    const bodyCol = hot ? ['#c9c9c9', '#8f8f8f'] : ['#a8a8a8', '#6f6f6f'];
     const bodyMain = bodyCol[0], bodyDark = bodyCol[1];
     // 身体：先画连贯粗线（圆头圆尾连接）
     ctx.strokeStyle = bodyDark;
@@ -923,16 +923,24 @@ function render(now, dt) {
       else ctx.lineTo(px, py);
     });
     ctx.stroke();
-    // 背部鳞片圆点装饰（奇数节）
-    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    // 每节小耳朵（老鼠串）
+    ctx.fillStyle = bodyMain;
     pts.forEach((p, i) => {
       if (i % 2 === 1) {
+        const px = p.x + CELL / 2, py = p.y + CELL / 2;
         ctx.beginPath();
-        ctx.arc(p.x + CELL / 2, p.y + CELL / 2, 1.6, 0, Math.PI * 2);
+        ctx.arc(px - 1.8, py - 2.8, 1.5, 0, Math.PI * 2);
+        ctx.arc(px + 1.8, py - 2.8, 1.5, 0, Math.PI * 2);
         ctx.fill();
+        ctx.fillStyle = '#d9a0a0';
+        ctx.beginPath();
+        ctx.arc(px - 1.8, py - 2.8, 0.7, 0, Math.PI * 2);
+        ctx.arc(px + 1.8, py - 2.8, 0.7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = bodyMain;
       }
     });
-    // 卡通蛇头（圆润大头 + 大眼 + 腮红）
+    // 卡通鼠头（圆润大头 + 大圆耳 + 黑豆眼 + 胡须）
     const h = pts[0];
     if (h) {
       const hx = h.x + CELL / 2, hy = h.y + CELL / 2;
@@ -945,57 +953,65 @@ function render(now, dt) {
       ctx.beginPath();
       ctx.arc(hx, hy, CELL * 0.52, 0, Math.PI * 2);
       ctx.fill();
-      // 眼睛（大而亮，随方向）
+      // 大圆耳（头顶两片，粉色内耳）
+      ctx.fillStyle = bodyDark;
+      ctx.beginPath();
+      ctx.arc(hx - 3.2, hy - 3.4, 2.2, 0, Math.PI * 2);
+      ctx.arc(hx + 3.2, hy - 3.4, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#d9a0a0';
+      ctx.beginPath();
+      ctx.arc(hx - 3.2, hy - 3.4, 1.1, 0, Math.PI * 2);
+      ctx.arc(hx + 3.2, hy - 3.4, 1.1, 0, Math.PI * 2);
+      ctx.fill();
+      // 眼睛（黑豆眼，随方向）
       const dx = d.x, dy = d.y;
       const ex1 = hx + dx * 2.2 - dy * 2.6, ey1 = hy + dy * 2.2 + dx * 2.6;
       const ex2 = hx + dx * 2.2 + dy * 2.6, ey2 = hy + dy * 2.2 - dx * 2.6;
-      ctx.fillStyle = '#fff';
-      ctx.beginPath();
-      ctx.ellipse(ex1, ey1, 2.4, 2.8, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.ellipse(ex2, ey2, 2.4, 2.8, 0, 0, Math.PI * 2);
-      ctx.fill();
       ctx.fillStyle = '#2a2a2a';
       ctx.beginPath();
-      ctx.arc(ex1 + dx * 0.8, ey1 + dy * 0.8, 1.3, 0, Math.PI * 2);
+      ctx.arc(ex1, ey1, 1.4, 0, Math.PI * 2);
       ctx.fill();
       ctx.beginPath();
-      ctx.arc(ex2 + dx * 0.8, ey2 + dy * 0.8, 1.3, 0, Math.PI * 2);
+      ctx.arc(ex2, ey2, 1.4, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = '#fff';
       ctx.beginPath();
-      ctx.arc(ex1 + dx * 0.8 - 0.5, ey1 + dy * 0.8 - 0.5, 0.5, 0, Math.PI * 2);
+      ctx.arc(ex1 - 0.5, ey1 - 0.5, 0.5, 0, Math.PI * 2);
       ctx.fill();
       ctx.beginPath();
-      ctx.arc(ex2 + dx * 0.8 - 0.5, ey2 + dy * 0.8 - 0.5, 0.5, 0, Math.PI * 2);
+      ctx.arc(ex2 - 0.5, ey2 - 0.5, 0.5, 0, Math.PI * 2);
       ctx.fill();
-      // 腮红
-      ctx.fillStyle = 'rgba(255,120,140,0.45)';
+      // 鼻头（前方粉色小圆）
+      ctx.fillStyle = '#e88a8a';
       ctx.beginPath();
-      ctx.ellipse(ex1 - dy * 1.6 + dx * 1.8, ey1 + dx * 1.6 + dy * 1.8, 1.6, 1.1, 0, 0, Math.PI * 2);
+      ctx.arc(hx + dx * 4.6, hy + dy * 4.6, 1.2, 0, Math.PI * 2);
       ctx.fill();
-      ctx.beginPath();
-      ctx.ellipse(ex2 + dy * 1.6 + dx * 1.8, ey2 - dx * 1.6 + dy * 1.8, 1.6, 1.1, 0, 0, Math.PI * 2);
-      ctx.fill();
-      // 微笑（小弧线）
-      ctx.strokeStyle = '#8a4a3a';
-      ctx.lineWidth = 1.1;
-      ctx.beginPath();
-      ctx.arc(hx + dx * 3, hy + dy * 3, 2, 0.1 * Math.PI, 0.9 * Math.PI);
+      // 胡须（两侧细线）
+      ctx.strokeStyle = 'rgba(70,70,70,0.6)';
+      ctx.lineWidth = 0.7;
+      const mx = hx + dx * 2, my = hy + dy * 2;
+      for (let s = -1; s <= 1; s += 2) {
+        ctx.beginPath();
+        ctx.moveTo(mx + s * 3.4, my + s * 1.6);
+        ctx.lineTo(mx + s * 7.5, my + s * 3);
+        ctx.moveTo(mx + s * 3.4, my - s * 1.2);
+        ctx.lineTo(mx + s * 7.5, my - s * 2.4);
+      }
       ctx.stroke();
-      // 小舌头
-      ctx.strokeStyle = '#e8574f';
-      ctx.lineWidth = 1.3;
+    }
+    // 尾部（细长卷曲尾巴，从最后一节延伸）
+    const tail = pts[pts.length - 1];
+    if (tail && pts.length > 1) {
+      const tx = tail.x + CELL / 2, ty = tail.y + CELL / 2;
+      const prev = pts[pts.length - 2];
+      let tx2 = tx - (prev.x - tx) * 1.6, ty2 = ty - (prev.y - ty) * 1.6;
+      ctx.strokeStyle = bodyDark;
+      ctx.lineWidth = 1.6;
+      ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.moveTo(hx + dx * 6.5, hy + dy * 6.5);
-      ctx.lineTo(hx + dx * 9, hy + dy * 9);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(hx + dx * 9, hy + dy * 9);
-      ctx.lineTo(hx + dx * 11 - dy * 1.5, hy + dy * 11 + dx * 1.5);
-      ctx.moveTo(hx + dx * 9, hy + dy * 9);
-      ctx.lineTo(hx + dx * 11 + dy * 1.5, hy + dy * 11 - dx * 1.5);
+      ctx.moveTo(tx, ty);
+      ctx.quadraticCurveTo(tx2 + 2, ty2 - 2, tx2 - 2, ty2 - 5);
       ctx.stroke();
     }
   }
@@ -1030,44 +1046,12 @@ function render(now, dt) {
         ctx.fillRect(fd.x * CELL + 2, fd.y * CELL + 2, CELL - 4, CELL - 4);
       }
     } else {
-      // 卡通苹果 / 金色小老鼠
+      // 卡通食物：红苹果（金色）/ 绿色蔬菜（普通）
       if (fd.golden) {
-        // 金色小老鼠：圆身 + 大耳朵 + 卷尾巴 + 眼睛
-        ctx.fillStyle = '#e8b93a';
-        ctx.beginPath();
-        ctx.arc(cx, cy + 1, 4.2, 0, Math.PI * 2);  // 身体
-        ctx.fill();
-        // 耳朵（左右两片）
-        ctx.fillStyle = '#e8b93a';
-        ctx.beginPath();
-        ctx.arc(cx - 2.6, cy - 3.2, 1.8, 0, Math.PI * 2);
-        ctx.arc(cx + 2.6, cy - 3.2, 1.8, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#c8902a';
-        ctx.beginPath();
-        ctx.arc(cx - 2.6, cy - 3.2, 0.9, 0, Math.PI * 2);
-        ctx.arc(cx + 2.6, cy - 3.2, 0.9, 0, Math.PI * 2);
-        ctx.fill();
-        // 尾巴（卷曲）
-        ctx.strokeStyle = '#d4a017';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(cx + 4, cy + 3, 2, 0.3, Math.PI * 1.2);
-        ctx.stroke();
-        // 眼睛 + 鼻子
-        ctx.fillStyle = '#5a3d10';
-        ctx.beginPath();
-        ctx.arc(cx - 1.2, cy, 0.55, 0, Math.PI * 2);
-        ctx.arc(cx + 1.2, cy, 0.55, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(cx, cy + 1.5, 0.7, 0, Math.PI * 2);
-        ctx.fill();
-      } else {
-        const appleCol = ['#e74c3c', '#b03a2e'];
+        // 红苹果
         const g3 = ctx.createRadialGradient(cx - 1, cy - 2, 1, cx, cy, 5);
-        g3.addColorStop(0, appleCol[0]);
-        g3.addColorStop(1, appleCol[1]);
+        g3.addColorStop(0, '#f05050');
+        g3.addColorStop(1, '#b03a2e');
         ctx.fillStyle = g3;
         ctx.beginPath();
         ctx.arc(cx, cy + 1, 4, 0, Math.PI * 2);
@@ -1088,6 +1072,32 @@ function render(now, dt) {
         ctx.beginPath();
         ctx.ellipse(cx - 1.5, cy - 1, 1.2, 0.8, 0, 0, Math.PI * 2);
         ctx.fill();
+      } else {
+        // 绿色蔬菜（小菜心/菜叶）
+        const g3 = ctx.createRadialGradient(cx - 1, cy - 2, 1, cx, cy, 5);
+        g3.addColorStop(0, '#8bc34a');
+        g3.addColorStop(1, '#558b2f');
+        ctx.fillStyle = g3;
+        ctx.beginPath();
+        ctx.arc(cx, cy + 1, 4, 0, Math.PI * 2);
+        ctx.fill();
+        // 菜叶（顶部两片）
+        ctx.fillStyle = '#7cb342';
+        ctx.beginPath();
+        ctx.ellipse(cx - 2.5, cy - 3.2, 2.8, 1.6, -0.6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(cx + 2.5, cy - 3.2, 2.8, 1.6, 0.6, 0, Math.PI * 2);
+        ctx.fill();
+        // 叶脉高光
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctx.lineWidth = 0.7;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - 1);
+        ctx.lineTo(cx - 1.8, cy + 2.4);
+        ctx.moveTo(cx, cy - 1);
+        ctx.lineTo(cx + 1.8, cy + 2.4);
+        ctx.stroke();
       }
     }
   });
