@@ -481,11 +481,32 @@
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
   }
+  /* 角色彩蛋覆盖层 */
+  .easter-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    cursor: pointer;
+  }
+  .easter-overlay.hidden { display: none; }
+  .easter-overlay img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
   .launch.hidden .launch-title { animation: none; }
 
 </style>
 </head>
 <body>
+<!-- 角色彩蛋覆盖层：铺满整个机身，点击关闭 -->
+<div id="easterOverlay" class="easter-overlay hidden">
+  <img id="easterImg" alt="彩蛋" />
+</div>
 <div class="phone">
   <div class="brand">NOKIA</div>
   <div class="screen-wrap">
@@ -533,6 +554,10 @@
   <div class="footer-easter">
     <div class="footer-brand" id="footerBrand">田田</div>
   </div>
+</div>
+<!-- 角色彩蛋覆盖层（连点 3 次角色名触发，点击关闭） -->
+<div id="easterOverlay" class="easter-overlay hidden">
+  <img id="easterImg" alt="彩蛋" />
 </div>
 <script>
 const COLS = 25, ROWS = 20;
@@ -1591,6 +1616,29 @@ function confirmLaunch() {
 
 document.getElementById('choiceA').addEventListener('click', () => selectLaunch('a'));
 document.getElementById('choiceB').addEventListener('click', () => selectLaunch('b'));
+
+// ===== 隐藏彩蛋：底部角色名连点 3 次 → 全屏显示角色图 =====
+// 图片路径（占位，等用户提供后填入）：
+const EASTER_IMG = { a: 'jump-jump.png', b: 'tian-tian.png' };
+const easterClick = { a: [], b: [] };
+const EASTER_WINDOW = 1200;   // 连点判定窗口（ms）
+
+document.getElementById('footerBrand').addEventListener('click', () => {
+  const who = launchSel;
+  const now = Date.now();
+  const arr = easterClick[who];
+  arr.push(now);
+  while (arr.length && now - arr[0] > EASTER_WINDOW) arr.shift();
+  if (arr.length >= 3) {
+    arr.length = 0;
+    const img = document.getElementById('easterImg');
+    img.src = EASTER_IMG[who];
+    document.getElementById('easterOverlay').classList.remove('hidden');
+  }
+});
+document.getElementById('easterOverlay').addEventListener('click', () => {
+  document.getElementById('easterOverlay').classList.add('hidden');
+});
 document.getElementById('stylePixel').addEventListener('click', () => selectStyle('pixel'));
 document.getElementById('styleCartoon').addEventListener('click', () => selectStyle('cartoon'));
 document.getElementById('launchConfirm').addEventListener('click', confirmLaunch);
