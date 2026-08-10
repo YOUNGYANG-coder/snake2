@@ -1727,6 +1727,9 @@ btnA.addEventListener('click', () => {
 });
 
 btnB.addEventListener('click', () => {
+  // 彩蛋显示时 B 键关闭彩蛋
+  const ov = document.getElementById('easterOverlay');
+  if (!ov.classList.contains('hidden')) { ov.classList.add('hidden'); return; }
   if (view === 'launch') return;
   sounds.play('click');
   document.getElementById('launch').classList.remove('hidden');

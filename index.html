@@ -555,10 +555,6 @@
     <div class="footer-brand" id="footerBrand">田田</div>
   </div>
 </div>
-<!-- 角色彩蛋覆盖层（连点 3 次角色名触发，点击关闭） -->
-<div id="easterOverlay" class="easter-overlay hidden">
-  <img id="easterImg" alt="彩蛋" />
-</div>
 <script>
 const COLS = 25, ROWS = 20;
 const CELL = 10;        // 逻辑格子（绘制时 *SCALE）
@@ -1730,6 +1726,9 @@ btnA.addEventListener('click', () => {
 });
 
 btnB.addEventListener('click', () => {
+  // 彩蛋显示时 B 键关闭彩蛋
+  const ov = document.getElementById('easterOverlay');
+  if (!ov.classList.contains('hidden')) { ov.classList.add('hidden'); return; }
   if (view === 'launch') return;
   sounds.play('click');
   document.getElementById('launch').classList.remove('hidden');
