@@ -821,28 +821,25 @@ function render(now, dt) {
     ctx.fillRect(0, 0, 250, 200);
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, 250, 150);
-    // 农田（下部：田垄 + 作物行）
-    ctx.fillStyle = `rgba(168,132,74,${aw.toFixed(2)})`;   // 土色
+    // 稻田（下部：米黄渐变，低干扰）
+    const paddy = ctx.createLinearGradient(0, 150, 0, 200);
+    paddy.addColorStop(0, `rgba(217,194,106,${aw.toFixed(2)})`);
+    paddy.addColorStop(1, `rgba(196,169,78,${aw.toFixed(2)})`);
+    ctx.fillStyle = paddy;
     ctx.fillRect(0, 150, 250, 50);
-    // 田垄线（水平浅线）
-    ctx.strokeStyle = `rgba(120,90,50,${(aw * 0.5).toFixed(2)})`;
+    // 稀疏稻行（竖线 + 穗头，低对比度）
+    ctx.strokeStyle = `rgba(150,128,60,${(aw * 0.35).toFixed(2)})`;
     ctx.lineWidth = 1;
-    ctx.beginPath();
-    for (let y = 160; y <= 195; y += 9) { ctx.moveTo(0, y + 0.5); ctx.lineTo(250, y + 0.5); }
-    ctx.stroke();
-    // 成行的小苗（两片叶，低对比度）
-    ctx.fillStyle = `rgba(90,140,60,${(aw * 0.7).toFixed(2)})`;
-    for (let row = 0; row < 4; row++) {
-      const ry = 162 + row * 9;
-      for (let x = 8; x < 250; x += 16) {
-        const sway = (x / 16) % 2 === 0 ? 0 : 1;
-        ctx.beginPath();
-        ctx.ellipse(x, ry, 1.6, 2.2, -0.5 + sway * 0.9, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.ellipse(x + 2, ry - 1, 1.4, 2, 0.5 - sway * 0.9, 0, Math.PI * 2);
-        ctx.fill();
-      }
+    for (let x = 6; x < 250; x += 18) {
+      const sway = (x / 18) % 2 === 0 ? -1 : 1;
+      ctx.beginPath();
+      ctx.moveTo(x, 195);
+      ctx.quadraticCurveTo(x + sway, 178, x + sway * 0.4, 162);
+      ctx.stroke();
+      // 穗头（短弧）
+      ctx.beginPath();
+      ctx.arc(x + sway * 0.4, 160, 3, 0.6, Math.PI * 0.9);
+      ctx.stroke();
     }
     // 太阳（右上角，带光芒）
     ctx.fillStyle = `rgba(255,214,64,${aw.toFixed(2)})`;
@@ -868,11 +865,13 @@ function render(now, dt) {
     };
     cloud(30 + drift * 60, 36);
     cloud(120 + drift * 40, 62);
-    // 田间小草点缀（稀疏）
-    ctx.fillStyle = `rgba(100,150,70,${(aw * 0.8).toFixed(2)})`;
-    ctx.fillRect(45, 152, 2, 5);
-    ctx.fillRect(185, 155, 2, 4);
-    ctx.fillRect(225, 152, 2, 5);
+    // 田间零星稻草点缀（稀疏）
+    ctx.strokeStyle = `rgba(150,128,60,${(aw * 0.3).toFixed(2)})`;
+    ctx.beginPath();
+    ctx.moveTo(48, 155); ctx.lineTo(50, 163);
+    ctx.moveTo(188, 157); ctx.lineTo(190, 165);
+    ctx.moveTo(228, 153); ctx.lineTo(230, 161);
+    ctx.stroke();
   }
   // 网格线（觉醒后淡出）
   if (aw < 1) {
@@ -1058,16 +1057,16 @@ function render(now, dt) {
         ctx.ellipse(cx - 1.5, cy - 1, 1.2, 0.8, 0, 0, Math.PI * 2);
         ctx.fill();
       } else {
-        // 绿色蔬菜（小菜心/菜叶）
+        // 绿色蔬菜（小菜心/菜叶，深绿提高稻田对比度）
         const g3 = ctx.createRadialGradient(cx - 1, cy - 2, 1, cx, cy, 5);
-        g3.addColorStop(0, '#8bc34a');
-        g3.addColorStop(1, '#558b2f');
+        g3.addColorStop(0, '#5a9e3f');
+        g3.addColorStop(1, '#2e6b1e');
         ctx.fillStyle = g3;
         ctx.beginPath();
         ctx.arc(cx, cy + 1, 4, 0, Math.PI * 2);
         ctx.fill();
-        // 菜叶（顶部两片）
-        ctx.fillStyle = '#7cb342';
+        // 菜叶（顶部两片，深绿）
+        ctx.fillStyle = '#3e7d2a';
         ctx.beginPath();
         ctx.ellipse(cx - 2.5, cy - 3.2, 2.8, 1.6, -0.6, 0, Math.PI * 2);
         ctx.fill();
