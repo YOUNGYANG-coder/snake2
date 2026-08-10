@@ -1,7 +1,7 @@
 {
-  "name": "Snake II 贪吃蛇",
-  "short_name": "贪吃蛇",
-  "description": "诺基亚复刻版贪吃蛇小游戏",
+  "name": "鼠食菜空间",
+  "short_name": "鼠食菜空间",
+  "description": "鼠食菜空间 — 贪吃蛇与俄罗斯方块小游戏",
   "lang": "zh-CN",
   "start_url": "index.html",
   "scope": ".",

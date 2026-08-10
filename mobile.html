@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#2e2e2e">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-512.png">
-<title>Snake II — 诺基亚复刻版贪吃蛇</title>
+<title>鼠食菜空间</title>
 <style>
   /* LCD 复古外观 */
   body {
@@ -796,16 +796,24 @@ game.onEvent = ev => {
   if (ev === 'crash') updateBest();
 };
 
-const bestKey = 'snakeBest';
-let best = parseInt(localStorage.getItem(bestKey) || '0', 10) || 0;
-document.getElementById('bestText').textContent = 'BEST ' + best;
+// 最高分按游戏拆分（贪吃蛇 / 俄罗斯方块各存各的）
+let best = parseInt(localStorage.getItem('bestSnake') || '0', 10) || 0;
+let bestTetris = parseInt(localStorage.getItem('bestTetris') || '0', 10) || 0;
+document.getElementById('bestText').textContent = 'BEST ' + bestTetris;
 
 function updateBest(scoreVal) {
   const s = scoreVal !== undefined ? scoreVal : game.score;
   if (s > best) {
     best = s;
-    localStorage.setItem(bestKey, String(best));
-    document.getElementById('bestText').textContent = 'BEST ' + best;
+    localStorage.setItem('bestSnake', String(best));
+    document.getElementById('bestText').textContent = 'BEST ' + bestTetris;
+  }
+}
+
+function updateBestTetris(s) {
+  if (s > bestTetris) {
+    bestTetris = s;
+    localStorage.setItem('bestTetris', String(bestTetris));
   }
 }
 
@@ -1298,7 +1306,7 @@ const tetris = {
     const y = 0;
     if (this.collides(shape, x, y)) {
       this.state = 'over';
-      updateBest(this.score);
+      updateBestTetris(this.score);
       return;
     }
     this.piece = { shape, x, y };
@@ -1384,6 +1392,24 @@ const tetris = {
   },
 
   tick() {
+    if (this.state === 'idle') {
+      // 待机演示：自动生成方块缓慢下落，落底清除后重来
+      this.dropTicks++;
+      if (!this.piece) {
+        this.board = Array.from({ length: TROWS }, () => Array(TCOLS).fill(0));
+        this.spawn();
+        if (!this.piece) return;
+      }
+      if (this.dropTicks >= 10) {
+        this.dropTicks = 0;
+        if (!this.collides(this.piece.shape, this.piece.x, this.piece.y + 1)) {
+          this.piece.y++;
+        } else {
+          this.piece = null;
+        }
+      }
+      return;
+    }
     if (this.state !== 'playing') return;
     this.dropTicks++;
     if (this.dropTicks >= this.speed) {
@@ -1536,11 +1562,11 @@ function renderTetris(now, dt) {
   tetris.effects = tetris.effects.filter(ef => ef.t < 1000);
   // 状态文字
   let text = '';
-  if (tetris.state === 'idle') text = 'TETRIS\n按任意键开始';
-  else if (tetris.state === 'over') text = 'GAME OVER\n得分 ' + tetris.score + '\n按任意键返回';
+  if (tetris.state === 'idle') text = 'TETRIS\n按 A 键开始';
+  else if (tetris.state === 'over') text = 'GAME OVER\n得分 ' + tetris.score + '\n按 B 键返回';
   stateText.textContent = text;
   document.getElementById('scoreText').textContent = 'SCORE ' + tetris.score;
-  document.getElementById('bestText').textContent = 'BEST ' + best;
+  document.getElementById('bestText').textContent = 'BEST ' + bestTetris;
   btnA.lastChild.textContent = '开始';
   btnB.lastChild.textContent = '返回';
   btnC.lastChild.textContent = '难度 ' + tetris.TDIFF_LABEL[tetris.tDiff];
@@ -9418,7 +9444,7 @@ selectStyle(null);
 tetris.reset();   // 初始化棋盘
 
 // ===== 键盘 =====
-const enterGameplay = new Set([' ', 'p', 'P', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', 'W', 'A', 'S', 'D']);
+const enterGameplay = new Set([' ', 'p', 'P', 'a', 'A', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
 
 function onKey(e) {
   const k = e.key;
@@ -9436,22 +9462,26 @@ function onKey(e) {
     return;
   }
   if (view === 'tetris') {
-    if (k === 'ArrowLeft' || k === 'a' || k === 'A') { tetris.move(-1); e.preventDefault(); }
-    else if (k === 'ArrowRight' || k === 'd' || k === 'D') { tetris.move(1); e.preventDefault(); }
-    else if (k === 'ArrowDown' || k === 's' || k === 'S') { tetris.step(); e.preventDefault(); }
-    else if (k === 'ArrowUp' || k === 'w' || k === 'W') { tetris.rotate(); e.preventDefault(); }
-    else if (k === ' ' || k === 'p' || k === 'P') {
+    if (k === 'ArrowLeft') { tetris.move(-1); e.preventDefault(); }
+    else if (k === 'ArrowRight') { tetris.move(1); e.preventDefault(); }
+    else if (k === 'ArrowDown') { tetris.step(); e.preventDefault(); }
+    else if (k === 'ArrowUp') { tetris.rotate(); e.preventDefault(); }
+    else if (k === 'a' || k === 'A' || k === 'Enter' || k === ' ') {
       if (tetris.state === 'idle' || tetris.state === 'over') { tetris.start(); sounds.play('click'); }
       e.preventDefault();
     }
+    else if (k === 'b' || k === 'B') { btnB.click(); e.preventDefault(); }
+    else if (k === 'c' || k === 'C') { btnC.click(); e.preventDefault(); }
     return;
   }
   // snake
-  if (k === 'ArrowUp' || k === 'w' || k === 'W') { game.turn(0, -1); e.preventDefault(); }
-  else if (k === 'ArrowDown' || k === 's' || k === 'S') { game.turn(0, 1); e.preventDefault(); }
-  else if (k === 'ArrowLeft' || k === 'a' || k === 'A') { game.turn(-1, 0); e.preventDefault(); }
-  else if (k === 'ArrowRight' || k === 'd' || k === 'D') { game.turn(1, 0); e.preventDefault(); }
-  else if (k === ' ' || k === 'p' || k === 'P') { game.togglePause(); e.preventDefault(); }
+  if (k === 'ArrowUp') { game.turn(0, -1); e.preventDefault(); }
+  else if (k === 'ArrowDown') { game.turn(0, 1); e.preventDefault(); }
+  else if (k === 'ArrowLeft') { game.turn(-1, 0); e.preventDefault(); }
+  else if (k === 'ArrowRight') { game.turn(1, 0); e.preventDefault(); }
+  else if (k === 'a' || k === 'A' || k === 'Enter' || k === ' ') { game.togglePause(); e.preventDefault(); }
+  else if (k === 'b' || k === 'B') { btnB.click(); e.preventDefault(); }
+  else if (k === 'c' || k === 'C') { btnC.click(); e.preventDefault(); }
 }
 
 document.addEventListener('keydown', onKey);
@@ -9472,9 +9502,15 @@ document.addEventListener('keydown', e => {
   if (enterGameplay.has(e.key) && view === 'snake') handleStartKey();
 });
 
+// 触屏按键震动反馈（手机支持时生效，桌面自动忽略）
+function tap() {
+  if (navigator.vibrate) navigator.vibrate(15);
+}
+
 // D-pad 触屏
 document.querySelectorAll('.dpad-btn').forEach(btn => {
   btn.addEventListener('click', () => {
+    tap();
     if (view === 'tetris') {
       const [dx, dy] = btn.dataset.dir.split(',').map(Number);
       if (dy === 0) tetris.move(dx);
@@ -9489,6 +9525,7 @@ document.querySelectorAll('.dpad-btn').forEach(btn => {
 });
 
 btnA.addEventListener('click', () => {
+  tap();
   if (view === 'launch') { confirmLaunch(); return; }
   if (view === 'tetris') {
     if (tetris.state === 'idle' || tetris.state === 'over') { tetris.start(); sounds.play('click'); }
@@ -9499,6 +9536,7 @@ btnA.addEventListener('click', () => {
 });
 
 btnB.addEventListener('click', () => {
+  tap();
   // 彩蛋显示时 B 键关闭彩蛋
   const ov = document.getElementById('easterOverlay');
   if (!ov.classList.contains('hidden')) { ov.classList.add('hidden'); return; }
@@ -9511,6 +9549,7 @@ btnB.addEventListener('click', () => {
 });
 
 btnC.addEventListener('click', () => {
+  tap();
   if (view === 'tetris') {
     tetris.cycleDifficulty();
     sounds.play('click');
