@@ -827,18 +827,33 @@ function render(now, dt) {
     paddy.addColorStop(1, `rgba(196,169,78,${aw.toFixed(2)})`);
     ctx.fillStyle = paddy;
     ctx.fillRect(0, 150, 250, 50);
-    // 稀疏稻行（竖线 + 穗头，低对比度）
-    ctx.strokeStyle = `rgba(150,128,60,${(aw * 0.35).toFixed(2)})`;
-    ctx.lineWidth = 1;
-    for (let x = 6; x < 250; x += 18) {
-      const sway = (x / 18) % 2 === 0 ? -1 : 1;
+    // 稻株（8 株：细茎 + 交错谷粒稻穗 + 穗芒）
+    for (let x = 12; x < 252; x += 30) {
+      const sway = (x / 30) % 2 === 0 ? 1 : -1;
+      const tipX = x + sway * 0.5, tipY = 170 + sway * 0.4;
+      // 茎（细弯线）
+      ctx.strokeStyle = `rgba(140,120,55,${(aw * 0.45).toFixed(2)})`;
+      ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(x, 195);
-      ctx.quadraticCurveTo(x + sway, 178, x + sway * 0.4, 162);
+      ctx.moveTo(x, 199);
+      ctx.quadraticCurveTo(x + sway * 0.3, 185, tipX, tipY);
       ctx.stroke();
-      // 穗头（短弧）
+      // 稻穗（两侧交错的谷粒）
+      ctx.fillStyle = `rgba(186,156,66,${(aw * 0.6).toFixed(2)})`;
+      for (let i = 0; i < 5; i++) {
+        const gy = tipY - 0.5 + i * 1.8;
+        const side = i % 2 === 0 ? -0.8 : 0.8;
+        ctx.beginPath();
+        ctx.ellipse(tipX + side, gy, 1.1, 0.7, side * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // 芒（穗顶细线）
+      ctx.strokeStyle = `rgba(150,130,55,${(aw * 0.35).toFixed(2)})`;
       ctx.beginPath();
-      ctx.arc(x + sway * 0.4, 160, 3, 0.6, Math.PI * 0.9);
+      ctx.moveTo(tipX - 0.8, tipY - 0.5);
+      ctx.lineTo(tipX - 1.8, tipY - 2.2);
+      ctx.moveTo(tipX + 0.8, tipY - 0.5);
+      ctx.lineTo(tipX + 1.8, tipY - 2.2);
       ctx.stroke();
     }
     // 太阳（右上角，带光芒）
