@@ -280,7 +280,7 @@
     letter-spacing: 3px;
   }
   .launch.style-pixel .launch-title {
-    font-size: 22px;
+    font-size: 24px;
   }
   .launch.style-pixel .launch-divider {
     background: linear-gradient(90deg, transparent, #3a3a2e, transparent);
@@ -362,12 +362,12 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 66px;
-    font-size: 22px;
+    height: 40px;
+    font-size: 24px;
     font-weight: bold;
     color: #5d4030;
     letter-spacing: 5px;
-    line-height: 1.55;
+    white-space: nowrap;
     text-shadow:
       0 1px 0 rgba(255,255,255,.65),
       0 3px 8px rgba(93,64,48,.18);
@@ -504,7 +504,7 @@
     <div id="stateText"></div>
     <div id="launch" class="launch style-pixel">
       <div class="launch-bg"></div>
-      <div class="launch-title">欢迎来到<br>舒适空间</div>
+      <div class="launch-title">欢迎来到鼠食空间</div>
       <div class="launch-divider"></div>
       <div class="launch-step">
         <div class="launch-question">你是谁？</div>
@@ -1029,31 +1029,65 @@ function render(now, dt) {
         ctx.fillRect(fd.x * CELL + 2, fd.y * CELL + 2, CELL - 4, CELL - 4);
       }
     } else {
-      // 卡通苹果
-      const appleCol = fd.golden ? ['#f4d03f', '#d4a017'] : ['#e74c3c', '#b03a2e'];
-      const g3 = ctx.createRadialGradient(cx - 1, cy - 2, 1, cx, cy, 5);
-      g3.addColorStop(0, appleCol[0]);
-      g3.addColorStop(1, appleCol[1]);
-      ctx.fillStyle = g3;
-      ctx.beginPath();
-      ctx.arc(cx, cy + 1, 4, 0, Math.PI * 2);
-      ctx.fill();
-      // 叶子 + 果柄
-      ctx.strokeStyle = '#6b8e23';
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy - 2);
-      ctx.lineTo(cx + 1, cy - 5);
-      ctx.stroke();
-      ctx.fillStyle = '#7cb342';
-      ctx.beginPath();
-      ctx.ellipse(cx + 2, cy - 5, 2.6, 1.4, -0.5, 0, Math.PI * 2);
-      ctx.fill();
-      // 高光
-      ctx.fillStyle = 'rgba(255,255,255,0.45)';
-      ctx.beginPath();
-      ctx.ellipse(cx - 1.5, cy - 1, 1.2, 0.8, 0, 0, Math.PI * 2);
-      ctx.fill();
+      // 卡通苹果 / 金色小老鼠
+      if (fd.golden) {
+        // 金色小老鼠：圆身 + 大耳朵 + 卷尾巴 + 眼睛
+        ctx.fillStyle = '#e8b93a';
+        ctx.beginPath();
+        ctx.arc(cx, cy + 1, 4.2, 0, Math.PI * 2);  // 身体
+        ctx.fill();
+        // 耳朵（左右两片）
+        ctx.fillStyle = '#e8b93a';
+        ctx.beginPath();
+        ctx.arc(cx - 2.6, cy - 3.2, 1.8, 0, Math.PI * 2);
+        ctx.arc(cx + 2.6, cy - 3.2, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#c8902a';
+        ctx.beginPath();
+        ctx.arc(cx - 2.6, cy - 3.2, 0.9, 0, Math.PI * 2);
+        ctx.arc(cx + 2.6, cy - 3.2, 0.9, 0, Math.PI * 2);
+        ctx.fill();
+        // 尾巴（卷曲）
+        ctx.strokeStyle = '#d4a017';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(cx + 4, cy + 3, 2, 0.3, Math.PI * 1.2);
+        ctx.stroke();
+        // 眼睛 + 鼻子
+        ctx.fillStyle = '#5a3d10';
+        ctx.beginPath();
+        ctx.arc(cx - 1.2, cy, 0.55, 0, Math.PI * 2);
+        ctx.arc(cx + 1.2, cy, 0.55, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cx, cy + 1.5, 0.7, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        const appleCol = ['#e74c3c', '#b03a2e'];
+        const g3 = ctx.createRadialGradient(cx - 1, cy - 2, 1, cx, cy, 5);
+        g3.addColorStop(0, appleCol[0]);
+        g3.addColorStop(1, appleCol[1]);
+        ctx.fillStyle = g3;
+        ctx.beginPath();
+        ctx.arc(cx, cy + 1, 4, 0, Math.PI * 2);
+        ctx.fill();
+        // 叶子 + 果柄
+        ctx.strokeStyle = '#6b8e23';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - 2);
+        ctx.lineTo(cx + 1, cy - 5);
+        ctx.stroke();
+        ctx.fillStyle = '#7cb342';
+        ctx.beginPath();
+        ctx.ellipse(cx + 2, cy - 5, 2.6, 1.4, -0.5, 0, Math.PI * 2);
+        ctx.fill();
+        // 高光
+        ctx.fillStyle = 'rgba(255,255,255,0.45)';
+        ctx.beginPath();
+        ctx.ellipse(cx - 1.5, cy - 1, 1.2, 0.8, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
   });
   // 毒食物：像素骷髅 / 卡通幽灵（觉醒后）
