@@ -813,19 +813,37 @@ function render(now, dt) {
     ctx.fillStyle = '#9e9d24';
     ctx.fillRect(0, 0, 250, 200);
   } else {
-    // 天空渐变（随 aw 增强透明度）
-    const sky = ctx.createLinearGradient(0, 0, 0, 200);
+    // 天空渐变（上部）
+    const sky = ctx.createLinearGradient(0, 0, 0, 150);
     sky.addColorStop(0, `rgba(135,206,235,${aw.toFixed(2)})`);
     sky.addColorStop(1, `rgba(176,232,255,${aw.toFixed(2)})`);
     ctx.fillStyle = '#9e9d24';
     ctx.fillRect(0, 0, 250, 200);
     ctx.fillStyle = sky;
-    ctx.fillRect(0, 0, 250, 200);
-    // 草地（底部）
-    ctx.fillStyle = `rgba(124,197,90,${aw.toFixed(2)})`;
-    ctx.fillRect(0, 178, 250, 22);
-    ctx.fillStyle = `rgba(94,164,66,${aw.toFixed(2)})`;
-    ctx.fillRect(0, 192, 250, 8);
+    ctx.fillRect(0, 0, 250, 150);
+    // 农田（下部：田垄 + 作物行）
+    ctx.fillStyle = `rgba(168,132,74,${aw.toFixed(2)})`;   // 土色
+    ctx.fillRect(0, 150, 250, 50);
+    // 田垄线（水平浅线）
+    ctx.strokeStyle = `rgba(120,90,50,${(aw * 0.5).toFixed(2)})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let y = 160; y <= 195; y += 9) { ctx.moveTo(0, y + 0.5); ctx.lineTo(250, y + 0.5); }
+    ctx.stroke();
+    // 成行的小苗（两片叶，低对比度）
+    ctx.fillStyle = `rgba(90,140,60,${(aw * 0.7).toFixed(2)})`;
+    for (let row = 0; row < 4; row++) {
+      const ry = 162 + row * 9;
+      for (let x = 8; x < 250; x += 16) {
+        const sway = (x / 16) % 2 === 0 ? 0 : 1;
+        ctx.beginPath();
+        ctx.ellipse(x, ry, 1.6, 2.2, -0.5 + sway * 0.9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(x + 2, ry - 1, 1.4, 2, 0.5 - sway * 0.9, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
     // 太阳（右上角，带光芒）
     ctx.fillStyle = `rgba(255,214,64,${aw.toFixed(2)})`;
     ctx.beginPath();
@@ -850,11 +868,11 @@ function render(now, dt) {
     };
     cloud(30 + drift * 60, 36);
     cloud(120 + drift * 40, 62);
-    // 草地小花
-    ctx.fillStyle = `rgba(255,120,140,${aw.toFixed(2)})`;
-    ctx.fillRect(40, 178, 3, 4);
-    ctx.fillStyle = `rgba(255,214,64,${aw.toFixed(2)})`;
-    ctx.fillRect(180, 182, 3, 4);
+    // 田间小草点缀（稀疏）
+    ctx.fillStyle = `rgba(100,150,70,${(aw * 0.8).toFixed(2)})`;
+    ctx.fillRect(45, 152, 2, 5);
+    ctx.fillRect(185, 155, 2, 4);
+    ctx.fillRect(225, 152, 2, 5);
   }
   // 网格线（觉醒后淡出）
   if (aw < 1) {
@@ -886,121 +904,100 @@ function render(now, dt) {
       ctx.fillRect(p.x + 1, p.y + 1, CELL - 2, CELL - 2);
     });
   } else {
-    // 卡通风格：老鼠队列（身体连成串 + 每节小耳朵 + 鼠头 + 长尾）
-    const bodyCol = hot ? ['#c9c9c9', '#8f8f8f'] : ['#a8a8a8', '#6f6f6f'];
+    // 卡通风格：首尾相连的老鼠串（每节一只独立老鼠，头咬尾连成队列）
+    const bodyCol = hot ? ['#e0e0e0', '#a8a8a8'] : ['#c8c8c8', '#909090'];
     const bodyMain = bodyCol[0], bodyDark = bodyCol[1];
-    // 身体：先画连贯粗线（圆头圆尾连接）
-    ctx.strokeStyle = bodyDark;
-    ctx.lineWidth = CELL * 0.72;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.beginPath();
-    pts.forEach((p, i) => {
-      const px = p.x + CELL / 2, py = p.y + CELL / 2;
-      if (i === 0) ctx.moveTo(px, py);
-      else ctx.lineTo(px, py);
-    });
-    ctx.stroke();
-    // 身体高光（浅色内描线，增强立体感）
-    ctx.strokeStyle = bodyMain;
-    ctx.lineWidth = CELL * 0.5;
-    ctx.beginPath();
-    pts.forEach((p, i) => {
-      const px = p.x + CELL / 2, py = p.y + CELL / 2;
-      if (i === 0) ctx.moveTo(px, py);
-      else ctx.lineTo(px, py);
-    });
-    ctx.stroke();
-    // 每节小耳朵（老鼠串）
-    ctx.fillStyle = bodyMain;
-    pts.forEach((p, i) => {
-      if (i % 2 === 1) {
-        const px = p.x + CELL / 2, py = p.y + CELL / 2;
-        ctx.beginPath();
-        ctx.arc(px - 1.8, py - 2.8, 1.5, 0, Math.PI * 2);
-        ctx.arc(px + 1.8, py - 2.8, 1.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#d9a0a0';
-        ctx.beginPath();
-        ctx.arc(px - 1.8, py - 2.8, 0.7, 0, Math.PI * 2);
-        ctx.arc(px + 1.8, py - 2.8, 0.7, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = bodyMain;
-      }
-    });
-    // 卡通鼠头（圆润大头 + 大圆耳 + 黑豆眼 + 胡须）
-    const h = pts[0];
-    if (h) {
-      const hx = h.x + CELL / 2, hy = h.y + CELL / 2;
-      const d = game.dir;
-      // 头（稍大，圆润）
-      const headG = ctx.createRadialGradient(hx - 1, hy - 2, 1, hx, hy, 6.5);
-      headG.addColorStop(0, bodyMain);
-      headG.addColorStop(1, bodyDark);
-      ctx.fillStyle = headG;
+
+    // 画一只老鼠：cx,cy 中心；dx,dy 朝向；r 身体半径；isHead 带头鼠（大耳+胡须）
+    const drawMouse = (cx, cy, dx, dy, r, isHead) => {
+      const len = Math.hypot(dx, dy) || 1;
+      const ux = dx / len, uy = dy / len;
+      const px = -uy, py = ux;   // 垂直向量
+      // 身体
+      const g = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.2, cx, cy, r);
+      g.addColorStop(0, bodyMain);
+      g.addColorStop(1, bodyDark);
+      ctx.fillStyle = g;
       ctx.beginPath();
-      ctx.arc(hx, hy, CELL * 0.52, 0, Math.PI * 2);
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.fill();
-      // 大圆耳（头顶两片，粉色内耳）
+      // 耳朵（两片，粉色内耳）
+      const earR = isHead ? r * 0.5 : r * 0.5;
+      const ex1 = cx - ux * r * 0.15 + px * r * 0.55, ey1 = cy - uy * r * 0.15 + py * r * 0.55;
+      const ex2 = cx - ux * r * 0.15 - px * r * 0.55, ey2 = cy - uy * r * 0.15 - py * r * 0.55;
       ctx.fillStyle = bodyDark;
       ctx.beginPath();
-      ctx.arc(hx - 3.2, hy - 3.4, 2.2, 0, Math.PI * 2);
-      ctx.arc(hx + 3.2, hy - 3.4, 2.2, 0, Math.PI * 2);
+      ctx.arc(ex1 - ux * earR * 0.3, ey1 - uy * earR * 0.3, earR, 0, Math.PI * 2);
+      ctx.arc(ex2 - ux * earR * 0.3, ey2 - uy * earR * 0.3, earR, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = '#d9a0a0';
       ctx.beginPath();
-      ctx.arc(hx - 3.2, hy - 3.4, 1.1, 0, Math.PI * 2);
-      ctx.arc(hx + 3.2, hy - 3.4, 1.1, 0, Math.PI * 2);
+      ctx.arc(ex1 - ux * earR * 0.3, ey1 - uy * earR * 0.3, earR * 0.5, 0, Math.PI * 2);
+      ctx.arc(ex2 - ux * earR * 0.3, ey2 - uy * earR * 0.3, earR * 0.5, 0, Math.PI * 2);
       ctx.fill();
-      // 眼睛（黑豆眼，随方向）
-      const dx = d.x, dy = d.y;
-      const ex1 = hx + dx * 2.2 - dy * 2.6, ey1 = hy + dy * 2.2 + dx * 2.6;
-      const ex2 = hx + dx * 2.2 + dy * 2.6, ey2 = hy + dy * 2.2 - dx * 2.6;
+      // 眼睛（黑豆眼，前侧）
+      const eyeR = r * 0.16;
       ctx.fillStyle = '#2a2a2a';
+      const ox1 = cx + ux * r * 0.35 + px * r * 0.42, oy1 = cy + uy * r * 0.35 + py * r * 0.42;
+      const ox2 = cx + ux * r * 0.35 - px * r * 0.42, oy2 = cy + uy * r * 0.35 - py * r * 0.42;
       ctx.beginPath();
-      ctx.arc(ex1, ey1, 1.4, 0, Math.PI * 2);
+      ctx.arc(ox1, oy1, eyeR, 0, Math.PI * 2);
+      ctx.arc(ox2, oy2, eyeR, 0, Math.PI * 2);
       ctx.fill();
-      ctx.beginPath();
-      ctx.arc(ex2, ey2, 1.4, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#fff';
-      ctx.beginPath();
-      ctx.arc(ex1 - 0.5, ey1 - 0.5, 0.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(ex2 - 0.5, ey2 - 0.5, 0.5, 0, Math.PI * 2);
-      ctx.fill();
-      // 鼻头（前方粉色小圆）
+      // 鼻头（前向粉色小点）
       ctx.fillStyle = '#e88a8a';
       ctx.beginPath();
-      ctx.arc(hx + dx * 4.6, hy + dy * 4.6, 1.2, 0, Math.PI * 2);
+      ctx.arc(cx + ux * r * 0.9, cy + uy * r * 0.9, r * 0.22, 0, Math.PI * 2);
       ctx.fill();
-      // 胡须（两侧细线）
-      ctx.strokeStyle = 'rgba(70,70,70,0.6)';
-      ctx.lineWidth = 0.7;
-      const mx = hx + dx * 2, my = hy + dy * 2;
-      for (let s = -1; s <= 1; s += 2) {
+      // 尾部（向后卷曲）
+      ctx.strokeStyle = bodyDark;
+      ctx.lineWidth = r * 0.32;
+      ctx.lineCap = 'round';
+      const tx = cx - ux * r * 0.85, ty = cy - uy * r * 0.85;
+      ctx.beginPath();
+      ctx.moveTo(cx - ux * r * 0.6, cy - uy * r * 0.6);
+      ctx.quadraticCurveTo(tx + px * r * 0.35, ty + py * r * 0.35, tx - ux * r * 0.5 - px * r * 0.45, ty - uy * r * 0.5 - py * r * 0.45);
+      ctx.stroke();
+      // 头鼠胡须
+      if (isHead) {
+        ctx.strokeStyle = 'rgba(70,70,70,0.55)';
+        ctx.lineWidth = 0.7;
+        const mx = cx + ux * r * 0.35, my = cy + uy * r * 0.35;
         ctx.beginPath();
-        ctx.moveTo(mx + s * 3.4, my + s * 1.6);
-        ctx.lineTo(mx + s * 7.5, my + s * 3);
-        ctx.moveTo(mx + s * 3.4, my - s * 1.2);
-        ctx.lineTo(mx + s * 7.5, my - s * 2.4);
+        ctx.moveTo(mx + px * r * 0.45, my + py * r * 0.45);
+        ctx.lineTo(mx + px * r * 1.2 + ux * r * 0.55, my + py * r * 1.2 + uy * r * 0.55);
+        ctx.moveTo(mx - px * r * 0.45, my - py * r * 0.45);
+        ctx.lineTo(mx - px * r * 1.2 + ux * r * 0.55, my - py * r * 1.2 + uy * r * 0.55);
+        ctx.stroke();
       }
+    };
+
+    // 连接线：后一只的尾巴连到前一只的嘴（细线穿过节间）
+    ctx.strokeStyle = bodyDark;
+    ctx.lineWidth = 1.3;
+    ctx.lineCap = 'round';
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i], b = pts[i - 1];
+      const ax = a.x + CELL / 2, ay = a.y + CELL / 2;
+      const bx = b.x + CELL / 2, by = b.y + CELL / 2;
+      ctx.beginPath();
+      ctx.moveTo(ax, ay);
+      ctx.lineTo(bx, by);
       ctx.stroke();
     }
-    // 尾部（细长卷曲尾巴，从最后一节延伸）
-    const tail = pts[pts.length - 1];
-    if (tail && pts.length > 1) {
-      const tx = tail.x + CELL / 2, ty = tail.y + CELL / 2;
-      const prev = pts[pts.length - 2];
-      let tx2 = tx - (prev.x - tx) * 1.6, ty2 = ty - (prev.y - ty) * 1.6;
-      ctx.strokeStyle = bodyDark;
-      ctx.lineWidth = 1.6;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(tx, ty);
-      ctx.quadraticCurveTo(tx2 + 2, ty2 - 2, tx2 - 2, ty2 - 5);
-      ctx.stroke();
+
+    // 老鼠节：从尾到头绘制，头鼠最后画在最上层
+    for (let i = pts.length - 1; i >= 0; i--) {
+      const p = pts[i];
+      const cx = p.x + CELL / 2, cy = p.y + CELL / 2;
+      let dx, dy;
+      if (i === 0) { dx = game.dir.x; dy = game.dir.y; }
+      else {
+        const prev = pts[i - 1];
+        dx = prev.x - p.x; dy = prev.y - p.y;
+        if (dx === 0 && dy === 0) { dx = game.dir.x; dy = game.dir.y; }
+      }
+      drawMouse(cx, cy, dx, dy, i === 0 ? CELL * 0.45 : CELL * 0.34, i === 0);
     }
   }
   // 蛇头闪亮（刚吃到食物时，两种风格适配）
