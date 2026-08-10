@@ -481,9 +481,9 @@
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  /* 角色彩蛋覆盖层 */
+  /* 角色彩蛋覆盖层：铺满游戏屏幕区域，点击关闭 */
   .easter-overlay {
-    position: fixed;
+    position: absolute;
     inset: 0;
     z-index: 999;
     display: flex;
@@ -503,15 +503,15 @@
 </style>
 </head>
 <body>
-<!-- 角色彩蛋覆盖层：铺满整个机身，点击关闭 -->
-<div id="easterOverlay" class="easter-overlay hidden">
-  <img id="easterImg" alt="彩蛋" />
-</div>
 <div class="phone">
   <div class="brand">NOKIA</div>
   <div class="screen-wrap">
     <canvas id="screen" width="500" height="400"></canvas>
     <div id="stateText"></div>
+    <!-- 角色彩蛋覆盖层：只覆盖游戏屏幕区域，点击关闭 -->
+    <div id="easterOverlay" class="easter-overlay hidden">
+      <img id="easterImg" alt="彩蛋" />
+    </div>
     <div id="launch" class="launch style-pixel">
       <div class="launch-bg"></div>
       <div class="launch-title">欢迎来到鼠食空间</div>
