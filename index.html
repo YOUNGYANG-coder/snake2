@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#2e2e2e">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-512.png">
@@ -11,7 +11,7 @@
   /* LCD 复古外观 */
   body {
     margin: 0;
-    min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -26,6 +26,7 @@
       linear-gradient(160deg, #4e4e4e, #2c2c2c 55%, #232323);
     border-radius: 20px;
     padding: 24px 24px 20px;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
     box-shadow:
       0 18px 45px rgba(0,0,0,.65),
       0 2px 6px rgba(0,0,0,.4),
@@ -59,7 +60,7 @@
   }
   .screen-wrap {
     position: relative;
-    margin: 12px auto 0;
+    margin: 0 auto;
     padding: 6px;
     border-radius: 8px;
     background: linear-gradient(180deg, #6a6a6a, #4a4a4a);
@@ -76,13 +77,9 @@
     font-weight: bold;
     margin-bottom: 14px;
   }
-  .screen-wrap {
-    position: relative;
-    margin: 0 auto;
-  }
   #screen {
     display: block;
-    width: min(92vw, calc((96vh - 345px) * 1.25));
+    width: min(92vw, calc((96dvh - 345px) * 1.25));
     aspect-ratio: 5 / 4;
     background: #9e9d24;
     border-radius: 3px;
@@ -270,8 +267,7 @@
     z-index: 1;
   }
   .launch.style-pixel .launch-title,
-  .launch.style-pixel .launch-question,
-  .launch.style-pixel .style-label {
+  .launch.style-pixel .launch-question {
     color: #3a3a2e;
     text-shadow: 2px 2px 0 rgba(58,58,46,.25), -1px -1px 0 rgba(255,255,255,.2);
     font-family: monospace;
@@ -309,12 +305,6 @@
     text-shadow: 1px 1px 0 rgba(255,255,255,.2);
   }
   /* 卡通主题（暖色圆润 + 漂浮点缀） */
-  .launch.style-cartoon .launch-bg {
-    background:
-      radial-gradient(ellipse at 28% 22%, rgba(255,236,200,.85), transparent 45%),
-      radial-gradient(ellipse at 78% 78%, rgba(255,205,150,.7), transparent 50%),
-      linear-gradient(165deg, #f8ead2, #f3dcb8 55%, #eed2aa);
-  }
   .launch.style-cartoon .launch-bg::after {
     content: '⭐ 🎈 🍀 ✨ 🌸';
     position: absolute;
@@ -344,8 +334,6 @@
     font-family: monospace;
     text-align: center;
     overflow: hidden;
-    background:
-      radial-gradient(ellipse at 50% 30%, rgba(255,245,220,.6), transparent 60%);
   }
   .launch.hidden { display: none; }
   .launch-bg {
@@ -395,22 +383,12 @@
     animation: launchFade 1.2s ease-out .35s backwards;
   }
   .launch-step { display: flex; flex-direction: column; align-items: center; gap: 4px; position: relative; z-index: 2; }
-  .launch-step.hidden-step { display: none; }
   .launch-choices {
     position: relative;
     z-index: 2;
     display: flex;
     gap: 34px;
     animation: launchFade 1.2s ease-out .55s backwards;
-  }
-  .choice-wrap {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-  }
-  .choice-avatar {
-    display: none;
   }
   .launch-style-row {
     position: relative;
@@ -459,10 +437,6 @@
     animation: launchFade 1.2s ease-out .9s backwards;
   }
   .launch-confirm:hover { transform: translateY(-2px); }
-  @keyframes avatarFloat {
-    0%, 100% { transform: translateY(0) scale(1); }
-    50% { transform: translateY(-6px) scale(1.06); }
-  }
   .choice-btn {
     width: 108px;
     padding: 14px 0;
@@ -571,9 +545,9 @@ const COLS = 25, ROWS = 20;
 const CELL = 10;        // 逻辑格子（绘制时 *SCALE）
 const SCALE = 2;        // 高清渲染倍率（画布 500×400）
 const DIFFICULTY = {
-  slow:   { label: '慢', ms: 180 },
-  normal: { label: '中', ms: 120 },
-  fast:   { label: '快', ms: 80 },
+  slow:   { label: '慢', ms: 180, pts: 10 },
+  normal: { label: '中', ms: 120, pts: 20 },
+  fast:   { label: '快', ms: 80,  pts: 30 },
 };
 const ORDER = ['slow', 'normal', 'fast'];
 // 彩蛋评语：每跨过 100 分显示一条（6 条循环）
@@ -703,7 +677,8 @@ class Game {
       this.combo = this.comboTicks > 0 ? Math.min(this.combo + 1, 9) : 1;
       this.comboTicks = 15;
       const eaten = this.foods.splice(foodIdx, 1)[0];
-      const pts = eaten.golden ? 20 : 10;
+      // 难度分：慢/中/快 → 普通食物 10/20/30，金色 ×2
+      const pts = (eaten.golden ? 2 : 1) * DIFFICULTY[this.difficulty].pts;
       const gained = Math.round(pts * (1 + 0.1 * this.combo));
       this.score += gained;
       this.headFlash = 6;
@@ -1047,10 +1022,6 @@ function render(now, dt) {
       ctx.stroke();
     }
   }
-  // 过渡期混合：像素蛇上叠加半透明卡通蛇
-  if (aw > 0 && aw < 1) {
-    // 像素蛇仍绘制（在上方代码未覆盖），叠加卡通层通过 aw 混合
-  }
   // 蛇头闪亮（刚吃到食物时，两种风格适配）
   if (game.headFlash > 0 && game.snake.length > 0) {
     ctx.fillStyle = 'rgba(255,255,220,0.6)';
@@ -1235,9 +1206,19 @@ const tetris = {
     L: [[0,0,1],[1,1,1]],
   },
 
+  // 俄罗斯方块难度：下落间隔（tick 数）+ 每行基础分（慢/中/快 → 10/20/30）
+  TDIFF: {
+    fast:   { ticks: 20, pts: 30 },
+    normal: { ticks: 30, pts: 20 },
+    slow:   { ticks: 40, pts: 10 },
+  },
+  TDIFF_LABEL: { fast: '快', normal: '中', slow: '慢' },
+  tDiff: 'normal',
+
   reset() {
     this.state = 'idle';
     this.score = 0;
+    this.tDiff = 'normal';
     this.board = Array.from({ length: TROWS }, () => Array(TCOLS).fill(0));
     // 掌机开局：随机抽 2-3 个完整 tetromino（含随机旋转）在底部堆叠
     const types = Object.keys(this.SHAPES);
@@ -1269,7 +1250,7 @@ const tetris = {
     }
     this.piece = null;
     this.dropTicks = 0;
-    this.speed = 30;
+    this.speed = this.TDIFF[this.tDiff].ticks;
     this.awakened = false;
     this.awakenAt = 0;
     this.effects = [];
@@ -1353,7 +1334,8 @@ const tetris = {
       }
     }
     if (cleared > 0) {
-      const pts = [0, 100, 300, 500, 800][cleared] || 800;
+      // 难度分：慢/中/快 → 每行 10/20/30，多行按 1:3:5:8 倍数
+      const pts = ([0, 1, 3, 5, 8][cleared] || 8) * this.TDIFF[this.tDiff].pts;
       this.score += pts;
       this.effects.push({ type: 'line', x: 125, y: 80, text: '+' + pts, t: 0 });
       if (cleared >= 2) sounds.play('levelup');
@@ -1369,9 +1351,16 @@ const tetris = {
         sounds.play('awaken');
       }
       // 加速
-      this.speed = Math.max(12, 30 - Math.floor(this.score / 100) * 2);
+      this.speed = Math.max(this.TDIFF.fast.ticks, this.TDIFF[this.tDiff].ticks - Math.floor(this.score / 100) * 2);
     }
     this.spawn();
+  },
+
+  cycleDifficulty() {
+    const keys = Object.keys(this.TDIFF);
+    this.tDiff = keys[(keys.indexOf(this.tDiff) + 1) % keys.length];
+    this.speed = this.TDIFF[this.tDiff].ticks;
+    return this.tDiff;
   },
 
   tick() {
@@ -1401,8 +1390,10 @@ function renderTetris(now, dt) {
     ctx.strokeStyle = 'rgba(122,121,32,0.35)';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    for (let x = 0; x <= 250; x += CELL) { ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, 200); }
-    for (let y = 0; y <= 200; y += CELL) { ctx.moveTo(0, y + 0.5); ctx.lineTo(250, y + 0.5); }
+    // 网格只画在棋盘区，线与方块边界对齐（TOFF 起，每 CELL 一格）
+    const gx0 = TOFF * CELL, gx1 = (TOFF + TCOLS) * CELL;
+    for (let x = gx0; x <= gx1; x += CELL) { ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, 200); }
+    for (let y = 0; y <= 200; y += CELL) { ctx.moveTo(gx0, y + 0.5); ctx.lineTo(gx1, y + 0.5); }
     ctx.stroke();
     // 两侧装饰：小方块图案（俄罗斯方块机风）
     ctx.fillStyle = 'rgba(58,58,46,0.25)';
@@ -1541,7 +1532,7 @@ function renderTetris(now, dt) {
   document.getElementById('bestText').textContent = 'BEST ' + best;
   btnA.lastChild.textContent = '开始';
   btnB.lastChild.textContent = '返回';
-  btnC.lastChild.textContent = '速度 ' + tetris.speed;
+  btnC.lastChild.textContent = '难度 ' + tetris.TDIFF_LABEL[tetris.tDiff];
   ctx.restore();
 }
 
@@ -1671,27 +1662,8 @@ document.addEventListener('keydown', e => {
   if (enterGameplay.has(e.key) && view === 'snake') handleStartKey();
 });
 
-// 隐藏彩蛋：下键 + C 键同时按住 3 秒 → 直接觉醒
-const secretHold = { down: 0, c: 0, timer: null };
-const SECRET_MS = 3000;
-
-function trySecretAwaken() {
-  if (secretHold.down && secretHold.c && (Date.now() - Math.min(secretHold.down, secretHold.c)) >= SECRET_MS) {
-    if (!game.awakened) {
-      game.awakened = true;
-      game.awakenAt = performance.now();
-      game.emitEvent('awaken');
-      sounds.play('click');
-    }
-    secretHold.down = 0; secretHold.c = 0;
-    clearTimeout(secretHold.timer);
-    secretHold.timer = null;
-  }
-}
-
 // D-pad 触屏
 document.querySelectorAll('.dpad-btn').forEach(btn => {
-  const isDown = btn.dataset.dir === '0,1';
   btn.addEventListener('click', () => {
     if (view === 'tetris') {
       const [dx, dy] = btn.dataset.dir.split(',').map(Number);
@@ -1704,14 +1676,6 @@ document.querySelectorAll('.dpad-btn').forEach(btn => {
     game.turn(dx, dy);
     if (game.state === 'idle' || game.state === 'over') handleStartKey();
   });
-  if (isDown) {
-    btn.addEventListener('pointerdown', () => {
-      secretHold.down = Date.now();
-      clearTimeout(secretHold.timer);
-      secretHold.timer = setTimeout(trySecretAwaken, SECRET_MS);
-    });
-    btn.addEventListener('pointerup', () => { secretHold.down = 0; clearTimeout(secretHold.timer); secretHold.timer = null; });
-  }
 });
 
 btnA.addEventListener('click', () => {
@@ -1734,18 +1698,14 @@ btnB.addEventListener('click', () => {
 });
 
 btnC.addEventListener('click', () => {
-  if (view === 'snake') {
+  if (view === 'tetris') {
+    tetris.cycleDifficulty();
+    sounds.play('click');
+  } else if (view === 'snake') {
     game.cycleDifficulty();
     sounds.play('click');
   }
 });
-
-btnC.addEventListener('pointerdown', () => {
-  secretHold.c = Date.now();
-  clearTimeout(secretHold.timer);
-  secretHold.timer = setTimeout(trySecretAwaken, SECRET_MS);
-});
-btnC.addEventListener('pointerup', () => { secretHold.c = 0; clearTimeout(secretHold.timer); secretHold.timer = null; });
 </script>
 </body>
 </html>
