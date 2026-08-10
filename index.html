@@ -9417,7 +9417,7 @@ selectStyle(null);
 tetris.reset();   // 初始化棋盘
 
 // ===== 键盘 =====
-const enterGameplay = new Set([' ', 'p', 'P', 'z', 'Z', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', 'W', 'A', 'S', 'D']);
+const enterGameplay = new Set([' ', 'p', 'P', 'a', 'A', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
 
 function onKey(e) {
   const k = e.key;
@@ -9428,32 +9428,32 @@ function onKey(e) {
     } else if (k === 'ArrowUp' || k === 'ArrowDown') {
       selectStyle(launchStyle === 'pixel' ? 'cartoon' : 'pixel');
       e.preventDefault();
-    } else if (k === 'a' || k === 'A' || k === 'Enter' || k === ' ' || k === 'z' || k === 'Z') {
+    } else if (k === 'a' || k === 'A' || k === 'Enter' || k === ' ') {
       confirmLaunch();
       e.preventDefault();
     }
     return;
   }
   if (view === 'tetris') {
-    if (k === 'ArrowLeft' || k === 'a' || k === 'A') { tetris.move(-1); e.preventDefault(); }
-    else if (k === 'ArrowRight' || k === 'd' || k === 'D') { tetris.move(1); e.preventDefault(); }
-    else if (k === 'ArrowDown' || k === 's' || k === 'S') { tetris.step(); e.preventDefault(); }
-    else if (k === 'ArrowUp' || k === 'w' || k === 'W') { tetris.rotate(); e.preventDefault(); }
-    else if (k === ' ' || k === 'p' || k === 'P' || k === 'z' || k === 'Z') {
+    if (k === 'ArrowLeft') { tetris.move(-1); e.preventDefault(); }
+    else if (k === 'ArrowRight') { tetris.move(1); e.preventDefault(); }
+    else if (k === 'ArrowDown') { tetris.step(); e.preventDefault(); }
+    else if (k === 'ArrowUp') { tetris.rotate(); e.preventDefault(); }
+    else if (k === 'a' || k === 'A' || k === 'Enter' || k === ' ') {
       if (tetris.state === 'idle' || tetris.state === 'over') { tetris.start(); sounds.play('click'); }
       e.preventDefault();
     }
-    else if (k === 'x' || k === 'X') { btnB.click(); e.preventDefault(); }
+    else if (k === 'b' || k === 'B') { btnB.click(); e.preventDefault(); }
     else if (k === 'c' || k === 'C') { btnC.click(); e.preventDefault(); }
     return;
   }
   // snake
-  if (k === 'ArrowUp' || k === 'w' || k === 'W') { game.turn(0, -1); e.preventDefault(); }
-  else if (k === 'ArrowDown' || k === 's' || k === 'S') { game.turn(0, 1); e.preventDefault(); }
-  else if (k === 'ArrowLeft' || k === 'a' || k === 'A') { game.turn(-1, 0); e.preventDefault(); }
-  else if (k === 'ArrowRight' || k === 'd' || k === 'D') { game.turn(1, 0); e.preventDefault(); }
-  else if (k === ' ' || k === 'p' || k === 'P' || k === 'z' || k === 'Z') { game.togglePause(); e.preventDefault(); }
-  else if (k === 'x' || k === 'X') { btnB.click(); e.preventDefault(); }
+  if (k === 'ArrowUp') { game.turn(0, -1); e.preventDefault(); }
+  else if (k === 'ArrowDown') { game.turn(0, 1); e.preventDefault(); }
+  else if (k === 'ArrowLeft') { game.turn(-1, 0); e.preventDefault(); }
+  else if (k === 'ArrowRight') { game.turn(1, 0); e.preventDefault(); }
+  else if (k === 'a' || k === 'A' || k === 'Enter' || k === ' ') { game.togglePause(); e.preventDefault(); }
+  else if (k === 'b' || k === 'B') { btnB.click(); e.preventDefault(); }
   else if (k === 'c' || k === 'C') { btnC.click(); e.preventDefault(); }
 }
 
