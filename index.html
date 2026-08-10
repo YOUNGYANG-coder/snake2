@@ -458,24 +458,15 @@
     animation: launchFade 1.2s ease-out .55s backwards;
   }
   .choice-btn:hover { transform: translateY(-3px); }
-  /* 卡通主题选中反馈（按钮直接加 .selected） */
+  /* 统一选中反馈：深色底 + 亮色字 + 上浮（两种画风同构，配色随主题） */
   .choice-btn.selected {
-    transform: translateY(-3px) scale(1.05);
-    box-shadow:
-      0 5px 16px rgba(107,74,47,.4),
-      inset 0 1px 0 rgba(255,255,255,.85);
+    transform: translateY(-3px) scale(1.03);
   }
-  .choice-btn.choice-a.selected {
-    border-color: #c0704a;
-    background: linear-gradient(180deg, #fff0e0, #f5dcc0);
-    color: #a05030;
-    box-shadow: 0 5px 16px rgba(192,112,74,.45), inset 0 1px 0 rgba(255,255,255,.85);
-  }
-  .choice-btn.choice-b.selected {
-    border-color: #5a78b4;
-    background: linear-gradient(180deg, #e8f0ff, #d0ddf5);
-    color: #40588a;
-    box-shadow: 0 5px 16px rgba(90,120,180,.45), inset 0 1px 0 rgba(255,255,255,.85);
+  .launch.style-cartoon .choice-btn.selected {
+    background: linear-gradient(180deg, #6b4a2f, #4a3220);
+    color: #f5e8d0;
+    border-color: #6b4a2f;
+    box-shadow: 0 5px 14px rgba(107,74,47,.45), 0 2px 8px rgba(107,74,47,.4);
   }
   @keyframes launchFade {
     from { opacity: 0; transform: translateY(10px); }
@@ -526,7 +517,7 @@
       <div class="launch-step">
         <div class="launch-question">选择画风？</div>
         <div class="launch-style-row">
-          <button id="stylePixel" class="style-btn selected">方块</button>
+          <button id="stylePixel" class="style-btn">方块</button>
           <button id="styleCartoon" class="style-btn">卡通</button>
         </div>
       </div>
@@ -1593,16 +1584,18 @@ function selectLaunch(next) {
   launchSel = next;
   document.getElementById('choiceA').classList.toggle('selected', launchSel === 'a');
   document.getElementById('choiceB').classList.toggle('selected', launchSel === 'b');
-  document.getElementById('footerBrand').textContent = launchSel === 'a' ? '跳跳' : '田田';
+  if (launchSel) document.getElementById('footerBrand').textContent = launchSel === 'a' ? '跳跳' : '田田';
 }
 
 function selectStyle(s) {
   launchStyle = s;
   document.getElementById('stylePixel').classList.toggle('selected', s === 'pixel');
   document.getElementById('styleCartoon').classList.toggle('selected', s === 'cartoon');
-  const launch = document.getElementById('launch');
-  launch.classList.toggle('style-pixel', s === 'pixel');
-  launch.classList.toggle('style-cartoon', s === 'cartoon');
+  if (s) {
+    const launch = document.getElementById('launch');
+    launch.classList.toggle('style-pixel', s === 'pixel');
+    launch.classList.toggle('style-cartoon', s === 'cartoon');
+  }
 }
 
 function confirmLaunch() {
@@ -2818,9 +2811,9 @@ document.getElementById('stylePixel').addEventListener('click', () => selectStyl
 document.getElementById('styleCartoon').addEventListener('click', () => selectStyle('cartoon'));
 document.getElementById('launchConfirm').addEventListener('click', confirmLaunch);
 
-// 启动页初始：默认选 A 和像素
-selectLaunch('a');
-selectStyle('pixel');
+// 启动页初始：无高亮选中（点击才高亮），默认角色 A、画风 pixel 仅用于进入游戏
+selectLaunch(null);
+selectStyle(null);
 tetris.reset();   // 初始化棋盘
 
 // ===== 键盘 =====
